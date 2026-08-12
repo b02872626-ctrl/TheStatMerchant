@@ -118,6 +118,13 @@ body::before {
 .settings-form { padding: 24px; }
 .settings-actions { display: flex; justify-content: flex-end; align-items: center; gap: 16px; border-top: 1px solid var(--line); padding-top: 20px; }
 .settings-actions span { color: #167346; font-size: 12px; font-weight: 800; }
+.login-page { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: var(--ink); }
+.login-card { width: min(430px,100%); background: var(--paper); padding: 42px; box-shadow: 12px 12px 0 rgba(229,59,44,.7); }
+.login-card img { display: block; width: 115px; margin: 0 auto 38px; }
+.login-card h1 { font-family: "Aleo",serif; font-size: 40px; margin: 6px 0 10px; }
+.login-card p { color: var(--muted); line-height: 1.5; margin: 0 0 28px; }
+.login-card .primary-btn { width: 100%; }
+.login-error { color: var(--red); font-size: 12px; font-weight: 700; margin: -4px 0 14px; }
 
 /* Graph builder */
 .graph-builder { display:grid; grid-template-columns:300px minmax(0,1fr); min-height:650px; border:1px solid var(--line); background:#f9f7f1; }
