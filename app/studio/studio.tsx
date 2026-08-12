@@ -34,7 +34,7 @@ export default function Studio() {
 
   return <main className="studio">
     <aside className="studio-side">
-      <a className="wordmark" href="/studio">TheStat<span>Merchant</span></a>
+      <a className="studio-logo-link" href="/studio" aria-label="TheStatMerchant studio"><img className="studio-logo" src="/Logo/Asset%201.svg" alt="TheStatMerchant" /></a>
       <nav aria-label="Studio navigation">
         <button className="nav-item active">Stories</button>
         <button className="nav-item">Analytics</button>

@@ -6,7 +6,7 @@ export const metadata = {
 export default function StoryPage() {
   return <>
     <header className="article-header">
-      <a className="wordmark" href="/studio">TheStat<span>Merchant</span></a>
+      <a className="brand-logo-link" href="/studio" aria-label="TheStatMerchant studio"><img className="brand-logo" src="/Logo/Asset%201.svg" alt="TheStatMerchant" /></a>
     </header>
     <main className="article-main">
       <div className="eyebrow article-kicker">Tactical evolution</div>
@@ -30,6 +30,6 @@ export default function StoryPage() {
         <aside className="related"><h3>Keep reading</h3><a href="#">The £40m midfielder hiding in plain sight</a><a href="#">Five set-piece trends to watch this season</a><a href="#">What promoted sides get wrong in August</a></aside>
       </div>
     </main>
-    <footer className="article-footer"><div className="wordmark">TheStat<span>Merchant</span></div><p>Football, explained for the group chat.</p></footer>
+    <footer className="article-footer"><img className="footer-logo" src="/Logo/Asset%201.svg" alt="TheStatMerchant"/><p>Football, explained for the group chat.</p></footer>
   </>;
 }
