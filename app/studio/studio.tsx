@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import GraphBuilder from "./graphs/graph-builder";
 
-type View = "stories" | "analytics" | "settings";
+type View = "stories" | "graphs" | "analytics" | "settings";
 type Post = { id: number; title: string; slug: string; status: "Published" | "Draft"; date: string; reads: string; views: number; readTime: string; excerpt: string; body: string };
 
 const initialPosts: Post[] = [
@@ -40,13 +41,13 @@ export default function Studio() {
     const block = kind === "heading" ? "\n\n## Section heading\n\n" : kind === "quote" ? "\n\n> Add a memorable quote\n\n" : "\n\n---\n\n";
     setEditing({...editing, body: editing.body + block});
   };
-  const headings = { stories: ["Editorial studio", "Your stories"], analytics: ["Performance", "Story analytics"], settings: ["Publication", "Settings"] };
+  const headings = { stories: ["Editorial studio", "Your stories"], graphs: ["TheStatMerchant Graphs", "Player comparison"], analytics: ["Performance", "Story analytics"], settings: ["Publication", "Settings"] };
 
   return <main className="studio">
     <aside className="studio-side">
       <a className="studio-logo-link" href="/studio" aria-label="TheStatMerchant studio"><img className="studio-logo" src="/Logo/Asset%201.svg" alt="TheStatMerchant" /></a>
       <nav aria-label="Studio navigation">
-        {(["stories","analytics","settings"] as View[]).map(item => <button key={item} className={`nav-item ${view === item ? "active" : ""}`} onClick={()=>setView(item)}>{item[0].toUpperCase()+item.slice(1)}</button>)}
+        {(["stories","graphs","analytics","settings"] as View[]).map(item => <button key={item} className={`nav-item ${view === item ? "active" : ""}`} onClick={()=>setView(item)}>{item[0].toUpperCase()+item.slice(1)}</button>)}
       </nav>
       <div className="side-bottom"><strong style={{color:"white"}}>{author}, editor</strong><br/>Premier League desk</div>
     </aside>
@@ -68,6 +69,8 @@ export default function Studio() {
         <section className="analytics-grid"><div className="content-card chart-card"><div className="card-head"><h2>Views · last 7 days</h2><span className="post-meta">6–12 Aug</span></div><div className="bars" aria-label="Daily story views chart">{[42,58,37,71,64,85,100].map((h,i)=><div className="bar-wrap" key={i}><div className="bar" style={{height:`${h}%`}}/><span>{["Thu","Fri","Sat","Sun","Mon","Tue","Wed"][i]}</span></div>)}</div></div>
         <div className="content-card"><div className="card-head"><h2>Top-performing posts</h2></div>{[...published].sort((a,b)=>b.views-a.views).map((post,i)=><div className="rank-row" key={post.id}><strong>0{i+1}</strong><div><div className="post-title">{post.title}</div><span className="post-meta">{post.readTime} avg. read</span></div><b>{post.views.toLocaleString()}</b></div>)}</div></section>
       </>}
+
+      {view === "graphs" && <GraphBuilder/>}
 
       {view === "settings" && <section className="settings-wrap"><div className="content-card settings-card"><div className="card-head"><div><h2>Publication details</h2><p>Shown across your editorial studio and article metadata.</p></div></div><div className="settings-form"><label className="field"><span>Author name</span><input value={author} onChange={e=>setAuthor(e.target.value)}/></label><label className="field"><span>Publication name</span><input value={publication} onChange={e=>setPublication(e.target.value)}/></label><label className="field"><span>Publication description</span><textarea value={description} onChange={e=>setDescription(e.target.value)}/></label><label className="field"><span>Primary coverage</span><input value="Premier League and world football" readOnly/></label><div className="settings-actions"><span>{saved ? "Changes saved" : ""}</span><button className="primary-btn" onClick={()=>{setSaved(true);setTimeout(()=>setSaved(false),1800)}}>Save settings</button></div></div></div></section>}
     </section>
