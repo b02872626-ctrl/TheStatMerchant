@@ -3,12 +3,12 @@
 import { useMemo, useState } from "react";
 
 type View = "stories" | "analytics" | "settings";
-type Post = { id: number; title: string; slug: string; status: "Published" | "Draft"; date: string; reads: string; views: number; readTime: string; excerpt: string };
+type Post = { id: number; title: string; slug: string; status: "Published" | "Draft"; date: string; reads: string; views: number; readTime: string; excerpt: string; body: string };
 
 const initialPosts: Post[] = [
-  { id: 1, title: "Why the Premier League’s best wingers are moving inside", slug: "inside-forwards-premier-league", status: "Published", date: "12 Aug 2026", reads: "4.8k", views: 4826, readTime: "6m 18s", excerpt: "The touchline winger is disappearing. Here is what is replacing him — and why it is so difficult to defend." },
-  { id: 2, title: "The £40m midfielder hiding in plain sight", slug: "midfielder-hiding-in-plain-sight", status: "Draft", date: "Edited 2h ago", reads: "—", views: 0, readTime: "—", excerpt: "A data-led look at the league's most undervalued controller." },
-  { id: 3, title: "Five set-piece trends to watch this season", slug: "five-set-piece-trends", status: "Published", date: "8 Aug 2026", reads: "7.1k", views: 7119, readTime: "5m 42s", excerpt: "From blocker screens to crowding the goalkeeper, the details shaping dead balls." },
+  { id: 1, title: "Why the Premier League’s best wingers are moving inside", slug: "inside-forwards-premier-league", status: "Published", date: "12 Aug 2026", reads: "4.8k", views: 4826, readTime: "6m 18s", excerpt: "The touchline winger is disappearing. Here is what is replacing him — and why it is so difficult to defend.", body: "For most of football history, the winger’s instructions could be drawn as a straight line. Stay wide. Beat the full-back. Reach the byline. Deliver.\n\nThe modern Premier League has bent that line until it points directly at goal." },
+  { id: 2, title: "The £40m midfielder hiding in plain sight", slug: "midfielder-hiding-in-plain-sight", status: "Draft", date: "Edited 2h ago", reads: "—", views: 0, readTime: "—", excerpt: "A data-led look at the league's most undervalued controller.", body: "" },
+  { id: 3, title: "Five set-piece trends to watch this season", slug: "five-set-piece-trends", status: "Published", date: "8 Aug 2026", reads: "7.1k", views: 7119, readTime: "5m 42s", excerpt: "From blocker screens to crowding the goalkeeper, the details shaping dead balls.", body: "Set pieces are no longer a pause between phases. They are designed attacks with their own specialists, decoys and repeatable patterns." },
 ];
 
 export default function Studio() {
@@ -33,7 +33,13 @@ export default function Studio() {
     await navigator.clipboard?.writeText(`${window.location.origin}/stories/${post.slug}`);
     setCopied(post.id); setTimeout(() => setCopied(null), 1600);
   }
-  const newPost = () => setEditing({ id: Date.now(), title: "Untitled story", slug: "untitled-story", status: "Draft", date: "Just now", reads: "—", views: 0, readTime: "—", excerpt: "" });
+  const newPost = () => setEditing({ id: Date.now(), title: "", slug: "", status: "Draft", date: "Just now", reads: "—", views: 0, readTime: "—", excerpt: "", body: "" });
+  const setTitle = (title: string) => editing && setEditing({...editing, title, slug: title.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")});
+  const addBlock = (kind: "heading" | "quote" | "divider") => {
+    if (!editing) return;
+    const block = kind === "heading" ? "\n\n## Section heading\n\n" : kind === "quote" ? "\n\n> Add a memorable quote\n\n" : "\n\n---\n\n";
+    setEditing({...editing, body: editing.body + block});
+  };
   const headings = { stories: ["Editorial studio", "Your stories"], analytics: ["Performance", "Story analytics"], settings: ["Publication", "Settings"] };
 
   return <main className="studio">
@@ -65,6 +71,16 @@ export default function Studio() {
 
       {view === "settings" && <section className="settings-wrap"><div className="content-card settings-card"><div className="card-head"><div><h2>Publication details</h2><p>Shown across your editorial studio and article metadata.</p></div></div><div className="settings-form"><label className="field"><span>Author name</span><input value={author} onChange={e=>setAuthor(e.target.value)}/></label><label className="field"><span>Publication name</span><input value={publication} onChange={e=>setPublication(e.target.value)}/></label><label className="field"><span>Publication description</span><textarea value={description} onChange={e=>setDescription(e.target.value)}/></label><label className="field"><span>Primary coverage</span><input value="Premier League and world football" readOnly/></label><div className="settings-actions"><span>{saved ? "Changes saved" : ""}</span><button className="primary-btn" onClick={()=>{setSaved(true);setTimeout(()=>setSaved(false),1800)}}>Save settings</button></div></div></div></section>}
     </section>
-    {editing && <div className="editor-mask" role="dialog" aria-modal="true" aria-label="Story editor"><section className="editor"><div className="editor-top"><h2>Edit story</h2><button className="icon-btn" onClick={()=>setEditing(null)}>×</button></div><label className="field"><span>Headline</span><input value={editing.title} onChange={e=>setEditing({...editing,title:e.target.value})}/></label><label className="field"><span>Link</span><input value={editing.slug} onChange={e=>setEditing({...editing,slug:e.target.value.toLowerCase().replace(/[^a-z0-9]+/g,"-")})}/></label><label className="field"><span>Standfirst</span><textarea value={editing.excerpt} onChange={e=>setEditing({...editing,excerpt:e.target.value})}/></label><div className="editor-actions"><button className="secondary-btn" onClick={()=>save({...editing,status:"Draft"})}>Save as draft</button><button className="primary-btn" onClick={()=>save({...editing,status:"Published"})}>Publish story</button><button className="primary-btn" onClick={()=>save()}>Save changes</button></div></section></div>}
+    {editing && <div className="writer" role="dialog" aria-modal="true" aria-label="Story editor">
+      <header className="writer-bar"><button className="writer-back" onClick={()=>setEditing(null)}>← Stories</button><div className="writer-state"><span className="dot"/> Draft saved</div><div className="writer-actions"><button className="secondary-btn" onClick={()=>save({...editing,status:"Draft"})}>Save draft</button><button className="primary-btn" disabled={!editing.title.trim() || !editing.body.trim()} onClick={()=>save({...editing,status:"Published"})}>Publish</button></div></header>
+      <main className="writer-page">
+        <input className="writer-title" aria-label="Story title" placeholder="Title" value={editing.title} onChange={e=>setTitle(e.target.value)}/>
+        <textarea className="writer-dek" aria-label="Story summary" placeholder="Your story in one or two sentences…" value={editing.excerpt} onChange={e=>setEditing({...editing,excerpt:e.target.value})}/>
+        <div className="writer-meta"><span>By</span><input aria-label="Author name" value={author} onChange={e=>setAuthor(e.target.value)}/><span className="writer-url">/stories/{editing.slug || "your-story"}</span></div>
+        <div className="writer-tools" aria-label="Formatting tools"><button onClick={()=>addBlock("heading")}><b>H</b> Heading</button><button onClick={()=>addBlock("quote")}><b>“</b> Quote</button><button onClick={()=>addBlock("divider")}><b>—</b> Divider</button><button title="Add image"><b>＋</b> Image</button></div>
+        <textarea autoFocus className="writer-body" aria-label="Article body" placeholder="Write your story…" value={editing.body} onChange={e=>setEditing({...editing,body:e.target.value})}/>
+        <div className="writer-foot"><span>{editing.body.trim() ? editing.body.trim().split(/\s+/).length : 0} words</span><span>Use ## for headings and &gt; for quotes</span></div>
+      </main>
+    </div>}
   </main>;
 }

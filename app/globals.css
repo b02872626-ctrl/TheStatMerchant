@@ -85,6 +85,24 @@ body::before {
 .field textarea { min-height: 150px; resize: vertical; line-height: 1.5; }
 .editor-actions { display: flex; justify-content: flex-end; gap: 10px; }
 .secondary-btn { border: 1px solid var(--ink); background: transparent; padding: 11px 14px; font-weight: 800; cursor: pointer; }
+.primary-btn:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; }
+.writer { position: fixed; inset: 0; z-index: 80; background: var(--paper); overflow-y: auto; }
+.writer-bar { height: 64px; position: sticky; top: 0; z-index: 3; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 28px; border-bottom: 1px solid var(--line); background: rgba(244,240,230,.96); backdrop-filter: blur(8px); }
+.writer-back { border: 0; background: transparent; width: max-content; color: var(--ink); font-weight: 800; cursor: pointer; }
+.writer-state { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 11px; }
+.writer-actions { justify-self: end; display: flex; gap: 9px; }
+.writer-page { width: min(760px, calc(100% - 40px)); margin: 72px auto 140px; }
+.writer-title { display: block; width: 100%; border: 0; outline: 0; background: transparent; color: var(--ink); font-family: "Aleo", Georgia, serif; font-size: clamp(48px, 6vw, 76px); font-weight: 700; line-height: 1.02; letter-spacing: -.045em; padding: 0; }
+.writer-title::placeholder, .writer-dek::placeholder, .writer-body::placeholder { color: #aaa99f; }
+.writer-dek { display: block; width: 100%; min-height: 74px; resize: none; border: 0; outline: 0; background: transparent; color: #41505b; font-family: "Aleo", Georgia, serif; font-size: 21px; line-height: 1.45; margin: 22px 0 12px; padding: 0; }
+.writer-meta { display: flex; align-items: center; gap: 7px; border-bottom: 1px solid var(--line); padding: 0 0 24px; color: var(--muted); font-size: 12px; }
+.writer-meta input { border: 0; background: transparent; color: var(--ink); outline: 0; font-weight: 800; width: 120px; }
+.writer-url { margin-left: auto; font-family: monospace; font-size: 10px; }
+.writer-tools { display: flex; gap: 5px; padding: 18px 0; position: sticky; top: 64px; background: var(--paper); z-index: 2; }
+.writer-tools button { border: 1px solid var(--line); background: #faf8f2; padding: 8px 11px; cursor: pointer; font-size: 11px; color: var(--ink); }
+.writer-tools b { margin-right: 5px; font-family: "Aleo", serif; }
+.writer-body { display: block; width: 100%; min-height: 520px; resize: none; border: 0; outline: 0; background: transparent; color: var(--ink); font-family: "Aleo", Georgia, serif; font-size: 20px; line-height: 1.75; padding: 12px 0; }
+.writer-foot { border-top: 1px solid var(--line); padding-top: 15px; display: flex; justify-content: space-between; color: var(--muted); font-size: 10px; }
 .analytics-grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 18px; }
 .chart-card { min-height: 390px; }
 .bars { height: 300px; padding: 35px 26px 22px; display: flex; align-items: flex-end; gap: 15px; }
@@ -142,6 +160,12 @@ body::before {
   .post-row { grid-template-columns: 1fr 80px 34px; }
   .post-row .post-meta:nth-of-type(2), .post-row .post-meta:nth-of-type(3) { display: none; }
   .search { display: none; }
+  .writer-bar { grid-template-columns: 1fr auto; padding: 0 14px; }
+  .writer-state { display: none; }
+  .writer-page { margin-top: 44px; }
+  .writer-title { font-size: 47px; }
+  .writer-url { display: none; }
+  .writer-tools { overflow-x: auto; }
   .article-header { padding: 0 18px; }
   .brand-logo-link, .brand-logo { height: 44px; }
   .article-main { padding: 44px 20px 70px; }
