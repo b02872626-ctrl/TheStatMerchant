@@ -7,8 +7,6 @@ export default function StoryPage() {
   return <>
     <header className="article-header">
       <a className="wordmark" href="/studio">TheStat<span>Merchant</span></a>
-      <div className="category">Premier League · Analysis</div>
-      <span className="pill"><span className="dot"/> Independent</span>
     </header>
     <main className="article-main">
       <div className="eyebrow article-kicker">Tactical evolution</div>
@@ -17,7 +15,6 @@ export default function StoryPage() {
       <div className="byline"><div className="avatar">NM</div><div><strong>By Nahu M.</strong><span>Aug 12, 2026 · 8 min read</span></div></div>
       <figure className="hero-wrap"><img className="hero-image" src="/inside-forward.png" alt="Textured tactical illustration of a red-shirted attacker facing three blue defenders"/><figcaption className="caption">The geometry of the modern winger: receive wide, carry diagonally, force the line to choose. Illustration: TheStatMerchant</figcaption></figure>
       <div className="story-grid">
-        <aside className="share"><span>Share</span><a className="share-button" href="https://t.me/share/url?url=https%3A%2F%2Fthestatmerchant.com%2Fstories%2Finside-forwards-premier-league">Telegram ↗</a><a className="share-button" href="#article">Read story</a></aside>
         <article className="story-body" id="article">
           <p>For most of football history, the winger’s instructions could be drawn as a straight line. Stay wide. Beat the full-back. Reach the byline. Deliver. The modern Premier League has bent that line until it points directly at goal.</p>
           <p>The league’s most dangerous wide players now begin outside the defensive block but do their decisive work between full-back and centre-back. That starting position is not cosmetic. It stretches the defence before the attacker folds the pitch in half.</p>
