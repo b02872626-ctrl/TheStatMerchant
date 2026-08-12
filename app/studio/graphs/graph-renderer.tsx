@@ -1,5 +1,6 @@
 "use client";
 import { Bar, BarChart, CartesianGrid, Cell, PolarAngleAxis, PolarGrid, Radar, RadarChart, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis } from "recharts";
+import type { TooltipContentProps, TooltipValueType } from "recharts";
 import type { ChartType, MetricKey, Player } from "../../../lib/football/types";
 import { footballCatalog } from "../../../lib/football/repository";
 
@@ -8,9 +9,8 @@ export function GraphRenderer({players,metric,type}:{players:Player[];metric:Met
   const metricInfo=footballCatalog.metrics.find(item=>item.key===metric)!;
   const data=players.map((player,index)=>({name:player.name.split(" ").at(-1),fullName:player.name,club:player.club,value:player.metrics[metric],minutes:player.minutes,fill:colors[index%colors.length]})).sort((a,b)=>b.value-a.value);
   if (!data.length) return <div className="graph-empty"><strong>Select players to compare</strong><p>Choose two or more players from the control panel.</p></div>;
-  const tooltip=({active,payload}:{active?:boolean;payload?:Array<{payload:typeof data[number]}>})=>active&&payload?.[0]?<div className="graph-tooltip"><b>{payload[0].payload.fullName}</b><span>{payload[0].payload.club}</span><strong>{payload[0].payload.value.toFixed(2)} <small>/ 90</small></strong></div>:null;
+  const tooltip=({active,payload}:TooltipContentProps<TooltipValueType,string|number>)=>{const item=payload?.[0]?.payload as typeof data[number] | undefined; return active&&item?<div className="graph-tooltip"><b>{item.fullName}</b><span>{item.club}</span><strong>{item.value.toFixed(2)} <small>/ 90</small></strong></div>:null};
   if(type==="radar") return <ResponsiveContainer width="100%" height="100%"><RadarChart data={data} outerRadius="72%"><PolarGrid stroke="#d4d0c7"/><PolarAngleAxis dataKey="name" tick={{fontSize:11,fill:"#071e33",fontWeight:700}}/><Radar dataKey="value" stroke="#e53b2c" fill="#e53b2c" fillOpacity={0.2}/><Tooltip content={tooltip}/></RadarChart></ResponsiveContainer>;
   if(type==="scatter") return <ResponsiveContainer width="100%" height="100%"><ScatterChart margin={{top:24,right:24,bottom:20,left:2}}><CartesianGrid stroke="#dedad1" strokeDasharray="3 5"/><XAxis type="number" dataKey="minutes" name="Minutes" tick={{fontSize:10}} label={{value:"Minutes played",position:"insideBottom",offset:-12,fontSize:10}}/><YAxis type="number" dataKey="value" name={metricInfo.label} tick={{fontSize:10}}/><Tooltip cursor={{strokeDasharray:"3 3"}} content={tooltip}/><Scatter data={data}>{data.map((entry,index)=><Cell key={entry.fullName} fill={colors[index%colors.length]}/>)}</Scatter></ScatterChart></ResponsiveContainer>;
   return <ResponsiveContainer width="100%" height="100%"><BarChart data={data} margin={{top:20,right:12,bottom:28,left:0}}><CartesianGrid vertical={false} stroke="#dedad1" strokeDasharray="3 5"/><XAxis dataKey="name" tick={{fontSize:10,fill:"#53606b"}} axisLine={false} tickLine={false}/><YAxis tick={{fontSize:10,fill:"#53606b"}} axisLine={false} tickLine={false}/><Tooltip cursor={{fill:"rgba(7,30,51,.04)"}} content={tooltip}/><Bar dataKey="value" radius={[3,3,0,0]}>{data.map((entry,index)=><Cell key={entry.fullName} fill={colors[index%colors.length]}/>)}</Bar></BarChart></ResponsiveContainer>;
 }
-

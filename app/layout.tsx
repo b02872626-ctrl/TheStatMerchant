@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
   title: "TheStatMerchant — Football, explained",
   description: "Sharp Premier League analysis, built for the group chat.",
   icons: { icon: "/favicon.svg" },
