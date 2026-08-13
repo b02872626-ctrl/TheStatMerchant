@@ -101,7 +101,9 @@ body::before {
 .writer-url { margin-left: auto; font-family: monospace; font-size: 10px; }
 .writer-tools { display: flex; gap: 5px; padding: 18px 0; position: sticky; top: 64px; background: var(--paper); z-index: 2; }
 .writer-tools button { border: 1px solid var(--line); background: #faf8f2; padding: 8px 11px; cursor: pointer; font-size: 11px; color: var(--ink); }
+.writer-tools button:disabled { opacity: .55; cursor: wait; }
 .writer-tools b { margin-right: 5px; font-family: "Aleo", serif; }
+.visually-hidden { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0,0,0,0) !important; white-space: nowrap !important; border: 0 !important; }
 .writer-body { display: block; width: 100%; min-height: 520px; resize: none; border: 0; outline: 0; background: transparent; color: var(--ink); font-family: "Aleo", Georgia, serif; font-size: 20px; line-height: 1.75; padding: 12px 0; }
 .writer-foot { border-top: 1px solid var(--line); padding-top: 15px; display: flex; justify-content: space-between; color: var(--muted); font-size: 10px; }
 .analytics-grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 18px; }
@@ -171,6 +173,9 @@ body::before {
 .story-body { font-family: "Aleo", Georgia, serif; font-size: 19px; line-height: 1.72; }
 .story-body p:first-child::first-letter { float: left; font-size: 72px; line-height: .78; font-weight: 700; padding: 10px 9px 0 0; color: var(--red); }
 .story-body h2 { font-size: 32px; line-height: 1.1; letter-spacing: -.025em; margin: 46px 0 15px; }
+.body-image-wrap { margin: 38px 0; }
+.body-image { display: block; width: 100%; height: auto; }
+.body-image-wrap figcaption { margin-top: 8px; color: var(--muted); font-family: Arial, sans-serif; font-size: 10px; line-height: 1.4; }
 .quote { border-left: 5px solid var(--yellow); margin: 42px 0; padding: 8px 0 8px 24px; font-size: 27px; line-height: 1.3; font-style: italic; }
 .tactical-card { background: var(--ink); color: white; padding: 24px; margin: 34px 0; font-family: Arial, sans-serif; }
 .tactical-card .eyebrow { color: var(--yellow); }
