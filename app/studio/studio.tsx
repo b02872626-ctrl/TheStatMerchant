@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { upload } from "@vercel/blob/client";
+import { useMemo, useRef, useState } from "react";
 import GraphBuilder from "./graphs/graph-builder";
 import type { Post, PublicationSettings } from "../../lib/content/types";
 
@@ -17,6 +18,9 @@ export default function Studio({initialPosts,initialSettings}:{initialPosts:Post
   const [coverage, setCoverage] = useState(initialSettings.coverage);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
   const shown = useMemo(() => posts.filter(p => p.title.toLowerCase().includes(query.toLowerCase())), [posts, query]);
   const published = posts.filter(p => p.status === "Published");
 
@@ -40,6 +44,34 @@ export default function Studio({initialPosts,initialSettings}:{initialPosts:Post
     const block = kind === "heading" ? "\n\n## Section heading\n\n" : kind === "quote" ? "\n\n> Add a memorable quote\n\n" : "\n\n---\n\n";
     setEditing({...editing, body: editing.body + block});
   };
+  async function addImage(file?: File) {
+    if (!file || !editing) return;
+    setSaveError("");
+    setUploadingImage(true);
+    try {
+      const safeName = file.name.toLowerCase().replace(/[^a-z0-9._-]+/g, "-");
+      const blob = await upload(`articles/${safeName}`, file, {
+        access: "public",
+        handleUploadUrl: "/api/uploads",
+      });
+      const textarea = bodyRef.current;
+      const start = textarea?.selectionStart ?? editing.body.length;
+      const end = textarea?.selectionEnd ?? start;
+      const imageBlock = `\n\n![${file.name.replace(/\.[^.]+$/, "")}](${blob.url})\n\n`;
+      const nextBody = editing.body.slice(0, start) + imageBlock + editing.body.slice(end);
+      setEditing({...editing, body: nextBody});
+      requestAnimationFrame(() => {
+        const cursor = start + imageBlock.length;
+        bodyRef.current?.focus();
+        bodyRef.current?.setSelectionRange(cursor, cursor);
+      });
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "The image could not be uploaded.");
+    } finally {
+      setUploadingImage(false);
+      if (imageInputRef.current) imageInputRef.current.value = "";
+    }
+  }
   const headings = { stories: ["Editorial studio", "Your stories"], graphs: ["TheStatMerchant Graphs", "Player comparison"], analytics: ["Performance", "Story analytics"], settings: ["Publication", "Settings"] };
 
   return <main className="studio">
@@ -59,7 +91,7 @@ export default function Studio({initialPosts,initialSettings}:{initialPosts:Post
       {view === "stories" && <>
         <section className="stats"><div className="stat"><strong>{published.length}</strong><span>Published stories</span></div><div className="stat"><strong>11.9k</strong><span>Total reads this month</span></div><div className="stat"><strong>68%</strong><span>From Telegram</span></div></section>
         <section className="content-card"><div className="card-head"><h2>All stories</h2><input className="search" aria-label="Search stories" placeholder="Search stories…" value={query} onChange={e=>setQuery(e.target.value)} /></div>
-          {shown.map(post => <div className="post-row" key={post.id}><div><div className="post-title">{post.title}</div><div className="post-slug">/stories/{post.slug}</div></div><span className={`status ${post.status === "Draft" ? "draft" : ""}`}>{post.status}</span><span className="post-meta">{post.date}</span><span className="post-meta">{post.reads} reads</span><button className="icon-btn" aria-label={`Edit ${post.title}`} onClick={()=>setEditing(post)}>•••</button><div style={{gridColumn:"1 / -1",display:"flex",gap:8,marginTop:-7}}>{post.status === "Published" && <a className="pill" href={`/stories/${post.slug}`} target="_blank">View story ↗</a>}<button className="pill" onClick={()=>copyLink(post)}>{copied === post.id ? "Copied!" : "Copy link"}</button></div></div>)}
+          {shown.map(post => <div className="post-row" key={post.id}><div><div className="post-title">{post.title}</div><div className="post-slug">/stories/{post.slug}</div></div><span className={`status ${post.status === "Draft" ? "draft" : ""}`}>{post.status}</span><span className="post-meta">{post.date}</span><span className="post-meta">{post.reads} reads</span><button className="icon-btn" aria-label={`Edit ${post.title}`} onClick={()=>setEditing(post)}>•••</button><div style={{gridColumn:"1 / -1",display:"flex",gap:8,marginTop:-7}}>{post.status === "Published" && <a className="pill" href={`/stories/${post.slug}`} target="_blank" rel="noreferrer">View story ↗</a>}<button className="pill" onClick={()=>copyLink(post)}>{copied === post.id ? "Copied!" : "Copy link"}</button></div></div>)}
         </section>
       </>}
 
@@ -79,8 +111,8 @@ export default function Studio({initialPosts,initialSettings}:{initialPosts:Post
         <input className="writer-title" aria-label="Story title" placeholder="Title" value={editing.title} onChange={e=>setTitle(e.target.value)}/>
         <textarea className="writer-dek" aria-label="Story summary" placeholder="Your story in one or two sentences…" value={editing.excerpt} onChange={e=>setEditing({...editing,excerpt:e.target.value})}/>
         <div className="writer-meta"><span>By</span><input aria-label="Author name" value={author} onChange={e=>setAuthor(e.target.value)}/><span className="writer-url">/stories/{editing.slug || "your-story"}</span></div>
-        <div className="writer-tools" aria-label="Formatting tools"><button onClick={()=>addBlock("heading")}><b>H</b> Heading</button><button onClick={()=>addBlock("quote")}><b>“</b> Quote</button><button onClick={()=>addBlock("divider")}><b>—</b> Divider</button><button title="Add image"><b>＋</b> Image</button></div>
-        <textarea autoFocus className="writer-body" aria-label="Article body" placeholder="Write your story…" value={editing.body} onChange={e=>setEditing({...editing,body:e.target.value})}/>
+        <div className="writer-tools" aria-label="Formatting tools"><button onClick={()=>addBlock("heading")}><b>H</b> Heading</button><button onClick={()=>addBlock("quote")}><b>“</b> Quote</button><button onClick={()=>addBlock("divider")}><b>—</b> Divider</button><button title="Add image" disabled={uploadingImage} onClick={()=>imageInputRef.current?.click()}><b>＋</b> {uploadingImage ? "Uploading…" : "Image"}</button><input ref={imageInputRef} className="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" onChange={event=>addImage(event.target.files?.[0])}/></div>
+        <textarea ref={bodyRef} className="writer-body" aria-label="Article body" placeholder="Write your story…" value={editing.body} onChange={e=>setEditing({...editing,body:e.target.value})}/>
         <div className="writer-foot"><span>{editing.body.trim() ? editing.body.trim().split(/\s+/).length : 0} words</span><span>Use ## for headings and &gt; for quotes</span></div>
       </main>
     </div>}

@@ -3,7 +3,7 @@ import { getPublishedPost, getPosts, getSettings } from "../../../lib/content/st
 
 export const dynamic = "force-dynamic";
 
-function renderBody(body:string){return body.split(/\n\n+/).filter(Boolean).map((block,index)=>block.startsWith("## ")?<h2 key={index}>{block.slice(3)}</h2>:block.startsWith("> ")?<blockquote className="quote" key={index}>{block.slice(2)}</blockquote>:block==="---"?<hr key={index}/>:<p key={index}>{block}</p>)}
+function renderBody(body:string){return body.split(/\n\n+/).filter(Boolean).map((block,index)=>{const image=block.match(/^!\[(.*)]\((https:\/\/[^)]+)\)$/);return block.startsWith("## ")?<h2 key={index}>{block.slice(3)}</h2>:block.startsWith("> ")?<blockquote className="quote" key={index}>{block.slice(2)}</blockquote>:block==="---"?<hr key={index}/>:image?<figure className="body-image-wrap" key={index}><img className="body-image" src={image[2]} alt={image[1]||"Article image"}/>{image[1]&&<figcaption>{image[1]}</figcaption>}</figure>:<p key={index}>{block}</p>})}
 
 export default async function StoryPage({params}:{params:Promise<{slug:string}>}) {
   const {slug}=await params; const [post,settings,allPosts]=await Promise.all([getPublishedPost(slug),getSettings(),getPosts()]); if(!post)notFound();
