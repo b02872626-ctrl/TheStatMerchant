@@ -60,6 +60,11 @@ export async function getPublishedPost(slug: string): Promise<Post | null> {
   await ensureSchema(); const rows=await sql`SELECT * FROM posts WHERE slug=${slug} AND status='Published' LIMIT 1`; return rows[0] ? toPost(rows[0] as Record<string,unknown>) : null;
 }
 
+export async function getPost(slug: string): Promise<Post | null> {
+  const sql = db(); if (!sql) return seedPosts.find(p=>p.slug===slug) ?? null;
+  await ensureSchema(); const rows=await sql`SELECT * FROM posts WHERE slug=${slug} LIMIT 1`; return rows[0] ? toPost(rows[0] as Record<string,unknown>) : null;
+}
+
 export async function savePost(post: Post): Promise<Post> {
   const sql = db(); if (!sql) return post;
   await ensureSchema();
