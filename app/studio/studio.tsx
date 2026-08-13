@@ -16,12 +16,15 @@ export default function Studio({initialPosts,initialSettings}:{initialPosts:Post
   const [description, setDescription] = useState(initialSettings.description);
   const [coverage, setCoverage] = useState(initialSettings.coverage);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const shown = useMemo(() => posts.filter(p => p.title.toLowerCase().includes(query.toLowerCase())), [posts, query]);
   const published = posts.filter(p => p.status === "Published");
 
   async function save(post = editing) {
     if (!post) return;
-    const response=await fetch("/api/posts",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({...post,author})}); if(!response.ok)return;
+    setSaveError("");
+    const response=await fetch("/api/posts",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({...post,author})});
+    if(!response.ok){const result=await response.json().catch(()=>({}));setSaveError(result.error ?? "The story could not be saved.");return;}
     const savedPost=await response.json() as Post;
     setPosts(current => current.some(p => p.id === savedPost.id||p.slug===savedPost.slug) ? current.map(p => p.id === savedPost.id||p.slug===savedPost.slug ? savedPost : p) : [savedPost, ...current]);
     setEditing(null);
@@ -71,7 +74,7 @@ export default function Studio({initialPosts,initialSettings}:{initialPosts:Post
       {view === "settings" && <section className="settings-wrap"><div className="content-card settings-card"><div className="card-head"><div><h2>Publication details</h2><p>Shown across your editorial studio and article metadata.</p></div></div><div className="settings-form"><label className="field"><span>Author name</span><input value={author} onChange={e=>setAuthor(e.target.value)}/></label><label className="field"><span>Publication name</span><input value={publication} onChange={e=>setPublication(e.target.value)}/></label><label className="field"><span>Publication description</span><textarea value={description} onChange={e=>setDescription(e.target.value)}/></label><label className="field"><span>Primary coverage</span><input value={coverage} onChange={e=>setCoverage(e.target.value)}/></label><div className="settings-actions"><span>{saved ? "Changes saved" : ""}</span><button className="primary-btn" onClick={async()=>{const response=await fetch("/api/settings",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({author,publication,description,coverage})});if(response.ok){setSaved(true);setTimeout(()=>setSaved(false),1800)}}}>Save settings</button></div></div></div></section>}
     </section>
     {editing && <div className="writer" role="dialog" aria-modal="true" aria-label="Story editor">
-      <header className="writer-bar"><button className="writer-back" onClick={()=>setEditing(null)}>← Stories</button><div className="writer-state"><span className="dot"/> Draft saved</div><div className="writer-actions"><button className="secondary-btn" onClick={()=>save({...editing,status:"Draft"})}>Save draft</button><button className="primary-btn" disabled={!editing.title.trim() || !editing.body.trim()} onClick={()=>save({...editing,status:"Published"})}>Publish</button></div></header>
+      <header className="writer-bar"><button className="writer-back" onClick={()=>setEditing(null)}>← Stories</button><div className={`writer-state ${saveError ? "writer-error" : ""}`}>{saveError || <><span className="dot"/> Ready to save</>}</div><div className="writer-actions"><button className="secondary-btn" onClick={()=>save({...editing,status:"Draft"})}>Save draft</button><button className="primary-btn" disabled={!editing.title.trim() || !editing.body.trim()} onClick={()=>save({...editing,status:"Published"})}>Publish</button></div></header>
       <main className="writer-page">
         <input className="writer-title" aria-label="Story title" placeholder="Title" value={editing.title} onChange={e=>setTitle(e.target.value)}/>
         <textarea className="writer-dek" aria-label="Story summary" placeholder="Your story in one or two sentences…" value={editing.excerpt} onChange={e=>setEditing({...editing,excerpt:e.target.value})}/>

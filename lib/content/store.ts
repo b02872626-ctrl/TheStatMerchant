@@ -5,6 +5,10 @@ import type { Post, PublicationSettings } from "./types";
 const connectionString = process.env.DATABASE_URL;
 let initialized = false;
 
+export function hasPersistentStorage() {
+  return Boolean(connectionString);
+}
+
 function db() {
   if (!connectionString) return null;
   return neon(connectionString);
