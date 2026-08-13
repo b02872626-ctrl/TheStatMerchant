@@ -17,22 +17,26 @@ function db() {
 async function ensureSchema() {
   const sql = db();
   if (!sql || initialized) return;
-  await sql`CREATE TABLE IF NOT EXISTS posts (
-    id BIGSERIAL PRIMARY KEY, title TEXT NOT NULL, slug TEXT UNIQUE NOT NULL,
-    status TEXT NOT NULL DEFAULT 'Draft', published_label TEXT NOT NULL DEFAULT 'Just now',
-    views INTEGER NOT NULL DEFAULT 0, read_time TEXT NOT NULL DEFAULT '—', excerpt TEXT NOT NULL DEFAULT '',
-    body TEXT NOT NULL DEFAULT '', author TEXT NOT NULL DEFAULT 'Nahu M.', hero_image TEXT NOT NULL DEFAULT '',
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-  )`;
-  await sql`CREATE TABLE IF NOT EXISTS publication_settings (
-    id INTEGER PRIMARY KEY DEFAULT 1, author TEXT NOT NULL, publication TEXT NOT NULL,
-    description TEXT NOT NULL, coverage TEXT NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-  )`;
+  await sql.transaction([
+    sql`SELECT pg_advisory_xact_lock(hashtext('thestatmerchant_schema_v1'))`,
+    sql`CREATE TABLE IF NOT EXISTS posts (
+      id BIGSERIAL PRIMARY KEY, title TEXT NOT NULL, slug TEXT UNIQUE NOT NULL,
+      status TEXT NOT NULL DEFAULT 'Draft', published_label TEXT NOT NULL DEFAULT 'Just now',
+      views INTEGER NOT NULL DEFAULT 0, read_time TEXT NOT NULL DEFAULT '—', excerpt TEXT NOT NULL DEFAULT '',
+      body TEXT NOT NULL DEFAULT '', author TEXT NOT NULL DEFAULT 'Nahu M.', hero_image TEXT NOT NULL DEFAULT '',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    sql`CREATE TABLE IF NOT EXISTS publication_settings (
+      id INTEGER PRIMARY KEY DEFAULT 1, author TEXT NOT NULL, publication TEXT NOT NULL,
+      description TEXT NOT NULL, coverage TEXT NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+  ]);
   const count = await sql`SELECT COUNT(*)::int AS count FROM posts`;
   if (Number(count[0]?.count ?? 0) === 0) {
     for (const post of seedPosts) {
       await sql`INSERT INTO posts (title,slug,status,published_label,views,read_time,excerpt,body,author,hero_image)
-        VALUES (${post.title},${post.slug},${post.status},${post.date},${post.views},${post.readTime},${post.excerpt},${post.body},${post.author},${post.heroImage})`;
+        VALUES (${post.title},${post.slug},${post.status},${post.date},${post.views},${post.readTime},${post.excerpt},${post.body},${post.author},${post.heroImage})
+        ON CONFLICT (slug) DO NOTHING`;
     }
   }
   await sql`INSERT INTO publication_settings (id,author,publication,description,coverage)
