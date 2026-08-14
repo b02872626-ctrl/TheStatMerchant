@@ -140,7 +140,6 @@ body::before {
 .writer-body { display: block; width: 100%; min-height: 650px; resize: vertical; border: 0; outline: 0; background: transparent; color: var(--ink); font-family: "Aleo", Georgia, serif; font-size: 17px; line-height: 1.65; padding: 22px; }
 .writer-live-preview { min-width: 0; background: #f8f4ea; }
 .writer-live-body { padding: 22px 28px 50px; font-size: 17px; overflow-wrap: anywhere; }
-.writer-live-body p:first-child::first-letter { float: none; font-size: inherit; line-height: inherit; font-weight: inherit; padding: 0; color: inherit; }
 .writer-preview-empty { color: #aaa99f; font-style: italic; }
 .rich-editor-shell { width: min(760px, 100%); margin: 26px auto 0; }
 .rich-editor-shell .writer-tools { width: 100%; margin: 0; }
@@ -225,7 +224,6 @@ body::before {
 .caption { max-width: 1180px; margin: 9px auto 0; padding: 0 32px; font-size: 10px; color: var(--muted); }
 .story-grid { display: grid; grid-template-columns: minmax(0, 650px) minmax(180px, 1fr); gap: 56px; margin: 54px auto 0; max-width: 930px; align-items: start; }
 .story-body { font-family: "Aleo", Georgia, serif; font-size: 19px; line-height: 1.72; }
-.story-body p:first-child::first-letter { float: left; font-size: 72px; line-height: .78; font-weight: 700; padding: 10px 9px 0 0; color: var(--red); }
 .story-body h2 { font-size: 32px; line-height: 1.1; letter-spacing: -.025em; margin: 46px 0 15px; }
 .story-body ul, .story-body ol { margin: 26px 0; padding-left: 26px; }
 .story-body li { margin: 8px 0; padding-left: 5px; }
