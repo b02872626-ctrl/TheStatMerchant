@@ -3,11 +3,16 @@ import type { ReactNode } from "react";
 import type { Post, PublicationSettings } from "../../lib/content/types";
 
 function renderInline(text: string): ReactNode[] {
-  const tokens = text.split(/(\*\*[^*\n]+\*\*|__[^_\n]+__|\*[^*\n]+\*|_[^_\n]+_|\n)/g).filter(Boolean);
+  const tokens = text.split(/(\*\*[^\n]+?\*\*|__[^\n]+?__|\+\+[^\n]+?\+\+|~~[^\n]+?~~|`[^`\n]+`|\[[^\]]+\]\(https:\/\/[^)]+\)|\*[^*\n]+\*|_[^_\n]+_|\n)/g).filter(Boolean);
   return tokens.map((token, index) => {
     if (token === "\n") return <br key={index}/>;
-    if ((token.startsWith("**") && token.endsWith("**")) || (token.startsWith("__") && token.endsWith("__"))) return <strong key={index}>{token.slice(2, -2)}</strong>;
-    if ((token.startsWith("*") && token.endsWith("*")) || (token.startsWith("_") && token.endsWith("_"))) return <em key={index}>{token.slice(1, -1)}</em>;
+    if ((token.startsWith("**") && token.endsWith("**")) || (token.startsWith("__") && token.endsWith("__"))) return <strong key={index}>{renderInline(token.slice(2, -2))}</strong>;
+    if ((token.startsWith("*") && token.endsWith("*")) || (token.startsWith("_") && token.endsWith("_"))) return <em key={index}>{renderInline(token.slice(1, -1))}</em>;
+    if (token.startsWith("++") && token.endsWith("++")) return <u key={index}>{renderInline(token.slice(2, -2))}</u>;
+    if (token.startsWith("~~") && token.endsWith("~~")) return <s key={index}>{renderInline(token.slice(2, -2))}</s>;
+    if (token.startsWith("`") && token.endsWith("`")) return <code key={index}>{token.slice(1, -1)}</code>;
+    const link = token.match(/^\[([^\]]+)]\((https:\/\/[^)]+)\)$/);
+    if (link) return <a key={index} href={link[2]}>{link[1]}</a>;
     return token;
   });
 }
@@ -36,6 +41,9 @@ function renderBody(body: string) {
     if (block === "---") return <hr key={index}/>;
     if (image) return <figure className="body-image-wrap" key={index}><Image className="body-image" src={image[2]} alt={image[1] || "Article image"} width={1200} height={800} sizes="(max-width: 800px) calc(100vw - 40px), 650px"/>{image[1] ? <figcaption>{image[1]}</figcaption> : null}</figure>;
     if (isTable(block)) return renderTable(block, index);
+    const lines = block.split("\n");
+    if (lines.every(line=>/^-\s+/.test(line))) return <ul key={index}>{lines.map((line,lineIndex)=><li key={lineIndex}>{renderInline(line.replace(/^-\s+/, ""))}</li>)}</ul>;
+    if (lines.every(line=>/^\d+\.\s+/.test(line))) return <ol key={index}>{lines.map((line,lineIndex)=><li key={lineIndex}>{renderInline(line.replace(/^\d+\.\s+/, ""))}</li>)}</ol>;
     return <p key={index}>{renderInline(block)}</p>;
   });
 }

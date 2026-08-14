@@ -24,8 +24,10 @@ async function ensureSchema() {
       status TEXT NOT NULL DEFAULT 'Draft', published_label TEXT NOT NULL DEFAULT 'Just now',
       views INTEGER NOT NULL DEFAULT 0, read_time TEXT NOT NULL DEFAULT '—', excerpt TEXT NOT NULL DEFAULT '',
       body TEXT NOT NULL DEFAULT '', author TEXT NOT NULL DEFAULT 'Nahu M.', hero_image TEXT NOT NULL DEFAULT '',
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      trashed_at TIMESTAMPTZ
     )`,
+    sql`ALTER TABLE posts ADD COLUMN IF NOT EXISTS trashed_at TIMESTAMPTZ`,
     sql`CREATE TABLE IF NOT EXISTS publication_settings (
       id INTEGER PRIMARY KEY DEFAULT 1, author TEXT NOT NULL, publication TEXT NOT NULL,
       description TEXT NOT NULL, coverage TEXT NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -52,17 +54,17 @@ function toPost(row: Record<string, unknown>): Post {
 
 export async function getPosts(): Promise<Post[]> {
   const sql = db(); if (!sql) return seedPosts;
-  await ensureSchema(); return (await sql`SELECT * FROM posts ORDER BY updated_at DESC`).map(row=>toPost(row as Record<string,unknown>));
+  await ensureSchema(); return (await sql`SELECT * FROM posts WHERE trashed_at IS NULL ORDER BY updated_at DESC`).map(row=>toPost(row as Record<string,unknown>));
 }
 
 export async function getPublishedPost(slug: string): Promise<Post | null> {
   const sql = db(); if (!sql) return seedPosts.find(p=>p.slug===slug&&p.status==="Published") ?? null;
-  await ensureSchema(); const rows=await sql`SELECT * FROM posts WHERE slug=${slug} AND status='Published' LIMIT 1`; return rows[0] ? toPost(rows[0] as Record<string,unknown>) : null;
+  await ensureSchema(); const rows=await sql`SELECT * FROM posts WHERE slug=${slug} AND status='Published' AND trashed_at IS NULL LIMIT 1`; return rows[0] ? toPost(rows[0] as Record<string,unknown>) : null;
 }
 
 export async function getPost(slug: string): Promise<Post | null> {
   const sql = db(); if (!sql) return seedPosts.find(p=>p.slug===slug) ?? null;
-  await ensureSchema(); const rows=await sql`SELECT * FROM posts WHERE slug=${slug} LIMIT 1`; return rows[0] ? toPost(rows[0] as Record<string,unknown>) : null;
+  await ensureSchema(); const rows=await sql`SELECT * FROM posts WHERE slug=${slug} AND trashed_at IS NULL LIMIT 1`; return rows[0] ? toPost(rows[0] as Record<string,unknown>) : null;
 }
 
 export async function savePost(post: Post): Promise<Post> {
@@ -70,9 +72,17 @@ export async function savePost(post: Post): Promise<Post> {
   await ensureSchema();
   const rows=await sql`INSERT INTO posts (title,slug,status,published_label,views,read_time,excerpt,body,author,hero_image)
     VALUES (${post.title},${post.slug},${post.status},${post.status === "Published" ? new Date().toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}) : "Edited just now"},${post.views},${post.readTime},${post.excerpt},${post.body},${post.author},${post.heroImage})
-    ON CONFLICT (slug) DO UPDATE SET title=EXCLUDED.title,status=EXCLUDED.status,published_label=EXCLUDED.published_label,excerpt=EXCLUDED.excerpt,body=EXCLUDED.body,author=EXCLUDED.author,hero_image=EXCLUDED.hero_image,updated_at=NOW()
+    ON CONFLICT (slug) DO UPDATE SET title=EXCLUDED.title,status=EXCLUDED.status,published_label=EXCLUDED.published_label,excerpt=EXCLUDED.excerpt,body=EXCLUDED.body,author=EXCLUDED.author,hero_image=EXCLUDED.hero_image,updated_at=NOW(),trashed_at=NULL
     RETURNING *`;
   return toPost(rows[0] as Record<string,unknown>);
+}
+
+export async function trashPost(id: number): Promise<boolean> {
+  const sql = db();
+  if (!sql) return false;
+  await ensureSchema();
+  const rows = await sql`UPDATE posts SET trashed_at=NOW(),updated_at=NOW() WHERE id=${id} AND trashed_at IS NULL RETURNING id`;
+  return rows.length > 0;
 }
 
 export async function getSettings(): Promise<PublicationSettings> {

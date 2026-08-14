@@ -75,6 +75,16 @@ body::before {
 .status { width: max-content; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; font-weight: 900; padding: 6px 8px; background: #dcefe4; color: #167346; }
 .status.draft { background: #eee8d8; color: #77642c; }
 .icon-btn { border: 1px solid var(--line); background: transparent; width: 32px; height: 32px; cursor: pointer; border-radius: 3px; }
+.icon-btn[aria-expanded="true"] { background: var(--ink); border-color: var(--ink); color: white; }
+.post-actions { position: relative; width: 32px; }
+.post-menu { position: absolute; z-index: 12; top: calc(100% + 7px); right: 0; width: 160px; padding: 5px; background: white; border: 1px solid var(--line); box-shadow: 5px 6px 0 rgba(7,30,51,.14); }
+.post-menu button { display: block; width: 100%; border: 0; background: transparent; padding: 10px 11px; color: var(--ink); font-size: 12px; font-weight: 800; text-align: left; cursor: pointer; }
+.post-menu button:hover, .post-menu button:focus-visible { background: #f0ede5; outline: 0; }
+.post-menu button.danger { color: #b52d23; }
+.post-menu button:disabled { opacity: .5; cursor: wait; }
+.story-message { padding: 11px 18px; border-bottom: 1px solid var(--line); font-size: 12px; font-weight: 700; }
+.story-message.success { background: #e1f1e7; color: #167346; }
+.story-message.error { background: #f8e2df; color: #a7281f; }
 .editor-mask { position: fixed; inset: 0; z-index: 60; background: rgba(7,30,51,.5); display: grid; place-items: center; padding: 20px; }
 .editor { width: min(720px, 100%); background: var(--paper); padding: 26px; max-height: 90vh; overflow: auto; box-shadow: 12px 12px 0 rgba(7,30,51,.25); }
 .editor-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
@@ -94,6 +104,8 @@ body::before {
 .writer-actions { justify-self: end; display: flex; gap: 9px; }
 .writer-page { width: min(1320px, calc(100% - 40px)); margin: 72px auto 140px; }
 .writer-page > .writer-title, .writer-page > .writer-dek, .writer-page > .writer-meta, .writer-page > .writer-cover, .writer-page > .writer-foot { width: min(760px, 100%); margin-left: auto; margin-right: auto; }
+.writer-page > .writer-title { width: min(970px, 100%); }
+.writer-page > .writer-cover { width: min(1180px, 100%); }
 .writer-title { display: block; width: 100%; border: 0; outline: 0; background: transparent; color: var(--ink); font-family: "Aleo", Georgia, serif; font-size: clamp(48px, 6vw, 76px); font-weight: 700; line-height: 1.02; letter-spacing: -.045em; padding: 0; }
 .writer-title::placeholder, .writer-dek::placeholder, .writer-body::placeholder { color: #aaa99f; }
 .writer-dek { display: block; width: 100%; min-height: 74px; resize: none; border: 0; outline: 0; background: transparent; color: #41505b; font-family: "Aleo", Georgia, serif; font-size: 21px; line-height: 1.45; margin: 22px 0 12px; padding: 0; }
@@ -130,6 +142,18 @@ body::before {
 .writer-live-body { padding: 22px 28px 50px; font-size: 17px; overflow-wrap: anywhere; }
 .writer-live-body p:first-child::first-letter { float: none; font-size: inherit; line-height: inherit; font-weight: inherit; padding: 0; color: inherit; }
 .writer-preview-empty { color: #aaa99f; font-style: italic; }
+.rich-editor-shell { width: min(760px, 100%); margin: 26px auto 0; }
+.rich-editor-shell .writer-tools { width: 100%; margin: 0; }
+.rich-editor-label { min-height: 39px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; border: 1px solid var(--line); border-bottom: 0; color: var(--muted); font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: .1em; }
+.rich-editor-label i { display: flex; align-items: center; gap: 6px; font-style: normal; font-weight: 700; letter-spacing: 0; text-transform: none; }
+.rich-editor-label .dot { width: 6px; height: 6px; }
+.rich-editor-canvas { min-height: 660px; padding: 38px 54px 90px; border: 1px solid var(--line); background: #f8f4ea; outline: 0; }
+.rich-editor-canvas:empty::before { content: attr(data-placeholder); color: #aaa99f; font-style: italic; pointer-events: none; }
+.rich-editor-canvas figure { margin: 38px 0; }
+.rich-editor-canvas figure img { display: block; max-width: 100%; height: auto; }
+.rich-editor-canvas figure figcaption { margin-top: 8px; color: var(--muted); font-family: Arial, sans-serif; font-size: 10px; line-height: 1.4; }
+.rich-editor-canvas .article-table-wrap { margin: 34px 0; }
+.rich-editor-canvas[contenteditable="false"] { opacity: .72; cursor: wait; }
 .writer-foot { border-top: 1px solid var(--line); padding-top: 15px; display: flex; justify-content: space-between; color: var(--muted); font-size: 10px; }
 .analytics-grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 18px; }
 .chart-card { min-height: 390px; }
@@ -203,6 +227,10 @@ body::before {
 .story-body { font-family: "Aleo", Georgia, serif; font-size: 19px; line-height: 1.72; }
 .story-body p:first-child::first-letter { float: left; font-size: 72px; line-height: .78; font-weight: 700; padding: 10px 9px 0 0; color: var(--red); }
 .story-body h2 { font-size: 32px; line-height: 1.1; letter-spacing: -.025em; margin: 46px 0 15px; }
+.story-body ul, .story-body ol { margin: 26px 0; padding-left: 26px; }
+.story-body li { margin: 8px 0; padding-left: 5px; }
+.story-body a { color: inherit; text-decoration-color: var(--red); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.story-body code { padding: 2px 5px; background: rgba(7,30,51,.08); font-family: monospace; font-size: .88em; }
 .body-image-wrap { margin: 38px 0; }
 .body-image { display: block; width: 100%; height: auto; }
 .body-image-wrap figcaption { margin-top: 8px; color: var(--muted); font-family: Arial, sans-serif; font-size: 10px; line-height: 1.4; }
@@ -245,6 +273,7 @@ body::before {
   .writer-compose { border-right: 0; border-bottom: 1px solid var(--line); }
   .writer-body { min-height: 430px; }
   .writer-live-body { min-height: 360px; padding: 20px; }
+  .rich-editor-canvas { min-height: 500px; padding: 28px 22px 60px; }
   .writer-actions { gap: 5px; }
   .writer-actions button { padding: 9px 10px; font-size: 11px; }
   .writer-cover-head { align-items: flex-start; }
