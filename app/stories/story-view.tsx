@@ -1,15 +1,47 @@
 import Image from "next/image";
+import type { ReactNode } from "react";
 import type { Post, PublicationSettings } from "../../lib/content/types";
+
+function renderInline(text: string): ReactNode[] {
+  const tokens = text.split(/(\*\*[^*\n]+\*\*|__[^_\n]+__|\*[^*\n]+\*|_[^_\n]+_|\n)/g).filter(Boolean);
+  return tokens.map((token, index) => {
+    if (token === "\n") return <br key={index}/>;
+    if ((token.startsWith("**") && token.endsWith("**")) || (token.startsWith("__") && token.endsWith("__"))) return <strong key={index}>{token.slice(2, -2)}</strong>;
+    if ((token.startsWith("*") && token.endsWith("*")) || (token.startsWith("_") && token.endsWith("_"))) return <em key={index}>{token.slice(1, -1)}</em>;
+    return token;
+  });
+}
+
+function tableCells(line: string) {
+  return line.trim().replace(/^\||\|$/g, "").split("|").map(cell=>cell.trim());
+}
+
+function isTable(block: string) {
+  const lines = block.split("\n").filter(Boolean);
+  return lines.length >= 2 && lines[0].includes("|") && /^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?$/.test(lines[1]);
+}
+
+function renderTable(block: string, key: number) {
+  const lines = block.split("\n").filter(Boolean);
+  const headers = tableCells(lines[0]);
+  const rows = lines.slice(2).map(tableCells);
+  return <div className="article-table-wrap" key={key}><table className="article-table"><thead><tr>{headers.map((cell,index)=><th key={index}>{renderInline(cell)}</th>)}</tr></thead><tbody>{rows.map((row,rowIndex)=><tr key={rowIndex}>{headers.map((_,cellIndex)=><td key={cellIndex}>{renderInline(row[cellIndex] ?? "")}</td>)}</tr>)}</tbody></table></div>;
+}
 
 function renderBody(body: string) {
   return body.split(/\n\n+/).filter(Boolean).map((block, index) => {
     const image = block.match(/^!\[(.*)]\((https:\/\/[^)]+)\)$/);
-    if (block.startsWith("## ")) return <h2 key={index}>{block.slice(3)}</h2>;
-    if (block.startsWith("> ")) return <blockquote className="quote" key={index}>{block.slice(2)}</blockquote>;
+    if (block.startsWith("## ")) return <h2 key={index}>{renderInline(block.slice(3))}</h2>;
+    if (block.startsWith("> ")) return <blockquote className="quote" key={index}>{renderInline(block.slice(2))}</blockquote>;
     if (block === "---") return <hr key={index}/>;
     if (image) return <figure className="body-image-wrap" key={index}><Image className="body-image" src={image[2]} alt={image[1] || "Article image"} width={1200} height={800} sizes="(max-width: 800px) calc(100vw - 40px), 650px"/>{image[1] ? <figcaption>{image[1]}</figcaption> : null}</figure>;
-    return <p key={index}>{block}</p>;
+    if (isTable(block)) return renderTable(block, index);
+    return <p key={index}>{renderInline(block)}</p>;
   });
+}
+
+export function ArticleBody({body}:{body:string}) {
+  return <>{renderBody(body)}</>;
 }
 
 export default function StoryView({post, settings, related, preview = false}:{post:Post; settings:PublicationSettings; related:Post[]; preview?:boolean}) {
@@ -25,7 +57,7 @@ export default function StoryView({post, settings, related, preview = false}:{po
       <div className="byline"><div className="avatar">{post.author.split(" ").map(part=>part[0]).join("").slice(0,2)}</div><div><strong>By {post.author}</strong><span>{post.date} · {post.readTime} read</span></div></div>
       {post.heroImage ? <figure className="hero-wrap"><div className="hero-image-frame"><Image className="hero-image" src={post.heroImage} alt={`${post.title} cover`} fill priority sizes="100vw"/></div><figcaption className="caption">Illustration: {settings.publication}</figcaption></figure> : null}
       <div className="story-grid">
-        <article className="story-body" id="article">{renderBody(post.body)}</article>
+        <article className="story-body" id="article"><ArticleBody body={post.body}/></article>
         <aside className="related"><h3>Keep reading</h3>{related.map(item=><a key={item.id} href={`/stories/${item.slug}`}>{item.title}</a>)}</aside>
       </div>
     </main>

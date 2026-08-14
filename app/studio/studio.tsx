@@ -3,6 +3,7 @@
 import { upload } from "@vercel/blob/client";
 import Image from "next/image";
 import { useMemo, useRef, useState } from "react";
+import { ArticleBody } from "../stories/story-view";
 import GraphBuilder from "./graphs/graph-builder";
 import type { Post, PublicationSettings } from "../../lib/content/types";
 
@@ -61,11 +62,30 @@ export default function Studio({initialPosts,initialSettings}:{initialPosts:Post
   const startEditing = (post: Post) => { setSaveError(""); setEditorState("ready"); setEditing(post); };
   const newPost = () => startEditing({ id: Date.now(), title: "", slug: "", status: "Draft", date: "Just now", reads: "—", views: 0, readTime: "—", excerpt: "", body: "",author,heroImage:"" });
   const setTitle = (title: string) => { if (!editing) return; setEditorState("ready"); setEditing({...editing, title, slug: title.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")}); };
-  const addBlock = (kind: "heading" | "quote" | "divider") => {
+  const insertAtCursor = (before: string, after = "", placeholder = "") => {
     if (!editing) return;
-    const block = kind === "heading" ? "\n\n## Section heading\n\n" : kind === "quote" ? "\n\n> Add a memorable quote\n\n" : "\n\n---\n\n";
+    const textarea = bodyRef.current;
+    const start = textarea?.selectionStart ?? editing.body.length;
+    const end = textarea?.selectionEnd ?? start;
+    const selected = editing.body.slice(start, end) || placeholder;
+    const insertion = `${before}${selected}${after}`;
     setEditorState("ready");
-    setEditing({...editing, body: editing.body + block});
+    setEditing({...editing, body: editing.body.slice(0, start) + insertion + editing.body.slice(end)});
+    requestAnimationFrame(() => {
+      const selectionStart = start + before.length;
+      bodyRef.current?.focus();
+      bodyRef.current?.setSelectionRange(selectionStart, selectionStart + selected.length);
+    });
+  };
+  const addBlock = (kind: "heading" | "quote" | "divider" | "table") => {
+    const blocks = {
+      heading: ["\n\n## ", "\n\n", "Section heading"],
+      quote: ["\n\n> ", "\n\n", "Add a memorable quote"],
+      divider: ["\n\n---\n\n", "", ""],
+      table: ["\n\n| Player | Minutes | Goals |\n| --- | ---: | ---: |\n| Player name | 0 | 0 |\n| Player name | 0 | 0 |\n\n", "", ""],
+    } as const;
+    const [before, after, placeholder] = blocks[kind];
+    insertAtCursor(before, after, placeholder);
   };
   async function addImage(file?: File) {
     if (!file || !editing) return;
@@ -158,8 +178,11 @@ export default function Studio({initialPosts,initialSettings}:{initialPosts:Post
           {editing.heroImage ? <div className="writer-cover-preview"><Image src={editing.heroImage} alt="Cover preview" fill sizes="760px"/></div> : <button className="writer-cover-empty" disabled={Boolean(uploadingImage)} onClick={()=>coverInputRef.current?.click()}><b>＋</b><span>Add a landscape cover image</span><small>JPEG, PNG, WebP, GIF or AVIF · up to 10 MB</small></button>}
           <input ref={coverInputRef} className="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" onChange={event=>addCoverImage(event.target.files?.[0])}/>
         </section>
-        <div className="writer-tools" aria-label="Formatting tools"><button onClick={()=>addBlock("heading")}><b>H</b> Heading</button><button onClick={()=>addBlock("quote")}><b>“</b> Quote</button><button onClick={()=>addBlock("divider")}><b>—</b> Divider</button><button title="Add image" disabled={Boolean(uploadingImage)} onClick={()=>imageInputRef.current?.click()}><b>＋</b> {uploadingImage === "body" ? "Uploading…" : "Image"}</button><input ref={imageInputRef} className="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" onChange={event=>addImage(event.target.files?.[0])}/></div>
-        <textarea ref={bodyRef} className="writer-body" aria-label="Article body" placeholder="Write your story…" value={editing.body} onChange={e=>{setEditorState("ready");setEditing({...editing,body:e.target.value})}}/>
+        <div className="writer-tools" aria-label="Formatting tools"><button title="Bold selected text" onClick={()=>insertAtCursor("**","**","bold text")}><b>B</b> Bold</button><button title="Italicize selected text" onClick={()=>insertAtCursor("*","*","italic text")}><b><i>I</i></b> Italic</button><button onClick={()=>addBlock("heading")}><b>H</b> Heading</button><button onClick={()=>addBlock("quote")}><b>“</b> Quote</button><button onClick={()=>addBlock("table")}><b>▦</b> Table</button><button onClick={()=>addBlock("divider")}><b>—</b> Divider</button><button title="Add image" disabled={Boolean(uploadingImage)} onClick={()=>imageInputRef.current?.click()}><b>＋</b> {uploadingImage === "body" ? "Uploading…" : "Image"}</button><input ref={imageInputRef} className="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" onChange={event=>addImage(event.target.files?.[0])}/></div>
+        <div className="writer-workbench">
+          <section className="writer-compose"><div className="writer-pane-label">Write</div><textarea ref={bodyRef} className="writer-body" aria-label="Article body" placeholder="Write your story…" value={editing.body} onChange={e=>{setEditorState("ready");setEditing({...editing,body:e.target.value})}}/></section>
+          <section className="writer-live-preview" aria-label="Live article preview"><div className="writer-pane-label"><span>Live preview</span><i><span className="dot"/> Updates as you type</i></div><article className="story-body writer-live-body">{editing.body.trim() ? <ArticleBody body={editing.body}/> : <p className="writer-preview-empty">Your formatted story, tables and images will appear here.</p>}</article></section>
+        </div>
         <div className="writer-foot"><span>{editing.body.trim() ? editing.body.trim().split(/\s+/).length : 0} words</span><span>Use ## for headings and &gt; for quotes</span></div>
       </main>
     </div>}
