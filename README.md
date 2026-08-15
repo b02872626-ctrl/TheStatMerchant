@@ -16,6 +16,21 @@ npm run dev
 npm run build
 ```
 
+## Football data
+
+The player-comparison studio uses API-Football when `API_FOOTBALL_KEY` is set.
+Create a free API-Football account, then add the key to `.env.local` for local
+development and to the Vercel project's environment variables for production:
+
+```bash
+API_FOOTBALL_KEY=your-server-only-key
+```
+
+The key is read only by `/api/football/players` and is never sent to the browser.
+Player-season responses are cached for six hours, and each competition/season
+load is capped at five provider pages to protect the free daily quota. Without a
+key, the interface clearly labels and uses the bundled demo dataset.
+
 This starter does not use `wrangler.jsonc`.
 
 ## Included Shape

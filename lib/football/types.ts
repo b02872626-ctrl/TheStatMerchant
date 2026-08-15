@@ -1,8 +1,8 @@
 export type CompetitionId = "premier-league" | "la-liga" | "serie-a" | "bundesliga" | "champions-league";
-export type PositionGroup = "Goalkeepers" | "Defenders" | "Defensive Midfielders" | "Attacking Midfielders" | "Wingers" | "Strikers" | "All Players";
+export type PositionGroup = "Goalkeepers" | "Defenders" | "Midfielders" | "Forwards" | "All Players";
 export type ChartType = "bar" | "scatter" | "radar";
 
-export type MetricKey = "goals" | "assists" | "shots" | "keyPasses" | "passes" | "tackles" | "interceptions" | "dribbles" | "touches" | "progressivePasses" | "progressiveCarries";
+export type MetricKey = "goals" | "assists" | "shots" | "keyPasses" | "passes" | "tackles" | "interceptions" | "dribbles";
 
 export type Player = {
   id: string;
@@ -15,6 +15,11 @@ export type Player = {
   metrics: Record<MetricKey, number>;
 };
 
-export type Competition = { id: CompetitionId; name: string };
+export type Competition = { id: CompetitionId; name: string; apiFootballId: number };
 export type Metric = { key: MetricKey; label: string; shortLabel: string };
-
+export type FootballDataset = {
+  players: Player[];
+  source: "api-football" | "demo";
+  updatedAt: string;
+  note?: string;
+};

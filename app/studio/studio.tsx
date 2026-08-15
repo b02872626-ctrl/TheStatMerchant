@@ -128,7 +128,7 @@ export default function Studio({initialPosts,initialSettings}:{initialPosts:Post
       </nav>
       <div className="side-bottom"><strong style={{color:"white"}}>{author}, editor</strong><br/>Premier League desk</div>
     </aside>
-    <section className="studio-main">
+    <section className={`studio-main ${view === "graphs" ? "studio-main-graphs" : ""}`}>
       <header className="studio-head">
         <div><div className="eyebrow">{headings[view][0]}</div><h1>{headings[view][1]}</h1></div>
         {view === "stories" && <button className="primary-btn" onClick={newPost}>+ New story</button>}
