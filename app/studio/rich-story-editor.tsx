@@ -2,6 +2,7 @@
 
 import { upload } from "@vercel/blob/client";
 import { type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { graphEmbedMarker, isRadarEmbed, normalizeGraphEmbedSrc, parseGraphEmbedBlock } from "../../lib/content/graph-embed";
 
 function escapeHtml(value: string) {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -32,11 +33,13 @@ function isTable(block: string) {
 function bodyToHtml(body: string) {
   return body.split(/\n\n+/).filter(Boolean).map(block => {
     const image = block.match(/^!\[(.*)]\((https:\/\/[^)]+)\)$/);
+    const graphEmbed = parseGraphEmbedBlock(block);
     const lines = block.split("\n");
     if (block.startsWith("## ")) return `<h2>${inlineHtml(block.slice(3))}</h2>`;
     if (block.startsWith("> ")) return `<blockquote class="quote">${inlineHtml(block.slice(2))}</blockquote>`;
     if (block === "---") return "<hr>";
     if (image) return `<figure class="body-image-wrap"><img class="body-image" src="${escapeHtml(image[2])}" alt="${escapeHtml(image[1] || "Article image")}"><figcaption>${escapeHtml(image[1])}</figcaption></figure>`;
+    if (graphEmbed) return `<div class="graph-embed-wrap ${isRadarEmbed(graphEmbed) ? "is-radar" : ""}" contenteditable="false"><iframe src="${escapeHtml(graphEmbed)}" title="TheStatMerchant interactive graph" loading="lazy" allow="fullscreen"></iframe><span>Interactive graph preview</span></div>`;
     if (isTable(block)) {
       const headers = tableCells(lines[0]);
       const rows = lines.slice(2).map(tableCells);
@@ -75,6 +78,11 @@ function editorToBody(editor: HTMLElement) {
       const image = node.querySelector("img");
       const caption = node.querySelector("figcaption")?.textContent?.trim() || image?.getAttribute("alt") || "";
       return image?.getAttribute("src") ? `![${caption}](${image.getAttribute("src")})` : "";
+    }
+    const graphFrame = tag === "iframe" ? node : node.querySelector(":scope > iframe");
+    if (graphFrame) {
+      const src = normalizeGraphEmbedSrc(graphFrame.getAttribute("src") ?? "", window.location.origin);
+      return src ? graphEmbedMarker(src) : "";
     }
     if (tag === "ul" || tag === "ol") {
       return Array.from(node.querySelectorAll(":scope > li")).map((item, index) => `${tag === "ul" ? "-" : `${index + 1}.`} ${inlineMarkdown(item)}`).join("\n");
@@ -249,6 +257,19 @@ export default function RichStoryEditor({body, disabled = false, onChange, onErr
     if (url?.startsWith("https://")) applyInline("a", {href:url});
     else if (url) onError("Links must start with https://");
   };
+  const addGraphEmbed = () => {
+    const html = window.prompt("Paste the iframe HTML copied from the Graphs page");
+    if (!html) return;
+    const template = document.createElement("template");
+    template.innerHTML = html.trim();
+    const frame = template.content.querySelector("iframe");
+    const src = normalizeGraphEmbedSrc(frame?.getAttribute("src") ?? "", window.location.origin);
+    if (!src) {
+      onError("Use an embed copied from this site's Graphs page.");
+      return;
+    }
+    insertHtml(`<div class="graph-embed-wrap ${isRadarEmbed(src) ? "is-radar" : ""}" contenteditable="false"><iframe src="${escapeHtml(src)}" title="TheStatMerchant interactive graph" loading="lazy" allow="fullscreen"></iframe><span>Interactive graph preview</span></div><p><br></p>`);
+  };
   async function addImage(file?: File) {
     if (!file) return;
     setUploading(true);
@@ -287,6 +308,7 @@ export default function RichStoryEditor({body, disabled = false, onChange, onErr
       <button type="button" disabled={disabled} onPointerDown={event=>runPointerAction(event,()=>makeList("ul"))} onClick={event=>runKeyboardAction(event,()=>makeList("ul"))}>•  List</button>
       <button type="button" disabled={disabled} onPointerDown={event=>runPointerAction(event,()=>makeList("ol"))} onClick={event=>runKeyboardAction(event,()=>makeList("ol"))}>1.  List</button>
       <button type="button" disabled={disabled} onPointerDown={event=>runPointerAction(event,addLink)} onClick={event=>runKeyboardAction(event,addLink)}>↗ Link</button>
+      <button type="button" disabled={disabled} onPointerDown={event=>runPointerAction(event,addGraphEmbed)} onClick={event=>runKeyboardAction(event,addGraphEmbed)}>▥ Embed graph</button>
       <button type="button" disabled={disabled} onPointerDown={event=>runPointerAction(event,()=>insertHtml('<div class="article-table-wrap"><table class="article-table"><thead><tr><th>Column 1</th><th>Column 2</th></tr></thead><tbody><tr><td>Value</td><td>Value</td></tr></tbody></table></div><p><br></p>'))} onClick={event=>runKeyboardAction(event,()=>insertHtml('<div class="article-table-wrap"><table class="article-table"><thead><tr><th>Column 1</th><th>Column 2</th></tr></thead><tbody><tr><td>Value</td><td>Value</td></tr></tbody></table></div><p><br></p>'))}>▦ Table</button>
       <button type="button" disabled={disabled} onPointerDown={event=>runPointerAction(event,()=>insertHtml("<hr><p><br></p>"))} onClick={event=>runKeyboardAction(event,()=>insertHtml("<hr><p><br></p>"))}>— Divider</button>
       <button type="button" disabled={disabled || uploading} onPointerDown={event=>runPointerAction(event,()=>imageInputRef.current?.click())} onClick={event=>runKeyboardAction(event,()=>imageInputRef.current?.click())}>＋ {uploading ? "Uploading…" : "Image"}</button>

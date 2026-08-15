@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { footballCatalog } from "../../../lib/football/repository";
 import type { ChartType, CompetitionId, FootballDataset, MetricKey, PositionGroup } from "../../../lib/football/types";
 import { ChartTypeSelector, CompetitionSelector, MetricSelector, PlayerSelector, PositionSelector, SeasonSelector } from "./selectors";
+import { GraphEmbedButton } from "./embed-button";
 import { GraphRenderer } from "./graph-renderer";
 import SeasonRadarComparison from "./season-radar-comparison";
 
@@ -58,6 +59,14 @@ export default function GraphBuilder() {
   const isCommunity = dataset?.requestKey === requestKey && dataset.source === "premier-league-stats";
   const statusLabel = loadError ? "Source error" : loading ? "Loading" : isLive ? "API-Football" : isCommunity ? "PL Stats" : "Demo data";
   const updatedAt = dataset?.requestKey === requestKey ? new Date(dataset.updatedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "";
+  const embedQuery = new URLSearchParams({
+    kind: "comparison",
+    season,
+    position,
+    metric,
+    type: chartType,
+    players: selectedPlayers.length === players.length && players.length ? "all" : selectedPlayers.map(player => player.id).join(","),
+  });
 
   return <div className="graph-page-stack"><div className="graph-builder">
     <aside className="graph-controls">
@@ -72,7 +81,7 @@ export default function GraphBuilder() {
     <section className="graph-canvas">
       <header>
         <div><span className="eyebrow">Player comparison · per 90</span><h2>{metricLabel}</h2><p>{selectedPlayers.length ? selectedPlayers.map(player => player.name).join(" · ") : "Select players from the control panel"}</p></div>
-        <div className={`live-badge ${loadError ? "error" : isLive || isCommunity ? "" : "demo"}`}><i />{statusLabel}</div>
+        <div className="graph-head-actions"><GraphEmbedButton path={`/embed/graph?${embedQuery}`} disabled={competition !== "premier-league" || loading || !!loadError || !selectedPlayers.length}/><div className={`live-badge ${loadError ? "error" : isLive || isCommunity ? "" : "demo"}`}><i />{statusLabel}</div></div>
       </header>
       <div className="chart-stage">
         {loading ? <div className="graph-empty"><strong>Loading player data…</strong><p>Fetching and preparing season statistics.</p></div> : loadError ? <div className="graph-empty graph-error"><strong>Data unavailable</strong><p>{loadError}</p><button type="button" className="graph-retry" onClick={() => { setLoadError(""); setRetryCount(count => count + 1); }}>Retry</button></div> : <GraphRenderer players={selectedPlayers} metric={metric} type={chartType} />}

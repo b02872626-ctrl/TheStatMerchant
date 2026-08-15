@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
 import { isAdmin } from "../../../../lib/auth";
 import { getApiFootballPlayers } from "../../../../lib/football/api-football";
-import { getPremierLeagueStatsPlayers } from "../../../../lib/football/premier-league-stats";
 import { footballCatalog, mockFootballDataSource } from "../../../../lib/football/repository";
+import { getCachedPremierLeagueStatsPlayers } from "../../../../lib/football/server-data";
 import type { CompetitionId, FootballDataset } from "../../../../lib/football/types";
 
 export const runtime = "nodejs";
@@ -15,12 +15,6 @@ const getCachedApiFootballPlayers = unstable_cache(
     return getApiFootballPlayers(apiKey, competition, season);
   },
   ["api-football-players-v1"],
-  { revalidate: 60 * 60 * 6 },
-);
-
-const getCachedPremierLeagueStatsPlayers = unstable_cache(
-  getPremierLeagueStatsPlayers,
-  ["premier-league-stats-players-v2"],
   { revalidate: 60 * 60 * 6 },
 );
 

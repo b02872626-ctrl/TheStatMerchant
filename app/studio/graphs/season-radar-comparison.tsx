@@ -1,28 +1,11 @@
 "use client";
 
 import { useEffect, useId, useMemo, useState } from "react";
-import { PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, ResponsiveContainer, Tooltip } from "recharts";
-import type { TooltipContentProps, TooltipValueType } from "recharts";
 import { footballCatalog } from "../../../lib/football/repository";
-import type { FootballDataset, MetricKey, Player, ProfileMetricKey } from "../../../lib/football/types";
-
-type RadarCohort = "All players" | "Forwards" | "Midfielders" | "Defenders" | "Attacking midfielders";
-type RadarPoint = { metric: string; playerA: number; playerB: number; rawA: number; rawB: number };
-
-const cohorts: RadarCohort[] = ["All players", "Forwards", "Midfielders", "Defenders", "Attacking midfielders"];
-const radarMetrics: Record<RadarCohort, ProfileMetricKey[]> = {
-  "All players": ["goals", "assists", "shots", "keyPasses", "dribbles", "passes", "tackles", "interceptions"],
-  Forwards: ["goals", "assists", "shots", "keyPasses", "dribbles", "passes", "tackles", "interceptions"],
-  Midfielders: ["assists", "keyPasses", "passes", "dribbles", "shots", "goals", "tackles", "interceptions"],
-  Defenders: ["tacklesWon", "interceptions", "clearances", "blocks", "aerialDuelsWon", "recoveries", "duelsWon", "passes"],
-  "Attacking midfielders": ["goals", "assists", "shots", "keyPasses", "dribbles", "passes", "tackles", "interceptions"],
-};
-const profileLabels: Record<ProfileMetricKey, string> = {
-  goals: "Goals", assists: "Assists", shots: "Shots", keyPasses: "Key passes",
-  passes: "Passes", tackles: "Tackles", interceptions: "Interceptions", dribbles: "Dribbles",
-  tacklesWon: "Tackles won", clearances: "Clearances", blocks: "Blocks",
-  aerialDuelsWon: "Aerial wins", recoveries: "Recoveries", duelsWon: "Duels won",
-};
+import { buildRadarData, inRadarCohort, radarCohorts, type RadarCohort } from "../../../lib/football/radar-profile";
+import type { FootballDataset, Player } from "../../../lib/football/types";
+import { GraphEmbedButton } from "./embed-button";
+import { PlayerRadarChart } from "./player-radar-chart";
 const defaultPlayers: Record<RadarCohort, [string, string]> = {
   "All players": ["Salah", "Saka"],
   Forwards: ["Salah", "Saka"],
@@ -30,43 +13,6 @@ const defaultPlayers: Record<RadarCohort, [string, string]> = {
   Defenders: ["van Dijk", "Saliba"],
   "Attacking midfielders": ["Palmer", "Ødegaard"],
 };
-
-function inCohort(player: Player, cohort: RadarCohort) {
-  if (cohort === "All players") return true;
-  if (cohort !== "Attacking midfielders") return player.position === cohort;
-  return player.position === "Midfielders" && (
-    player.metrics.keyPasses >= 1 ||
-    player.metrics.shots >= 1 ||
-    player.metrics.goals + player.metrics.assists >= 0.25
-  );
-}
-
-function metricValue(player: Player, metric: ProfileMetricKey) {
-  if (metric in player.metrics) return player.metrics[metric as MetricKey];
-  return player.profileMetrics?.[metric] ?? 0;
-}
-
-function percentile(value: number, players: Player[], metric: ProfileMetricKey) {
-  if (!players.length) return 0;
-  const values = players.map(player => metricValue(player, metric));
-  const below = values.filter(item => item < value).length;
-  const equal = values.filter(item => item === value).length;
-  return Math.round(((below + equal / 2) / values.length) * 100);
-}
-
-function labelFor(metric: ProfileMetricKey) {
-  return profileLabels[metric];
-}
-
-function RadarTooltip({ active, payload, playerAName, playerBName }: TooltipContentProps<TooltipValueType, string | number> & { playerAName: string; playerBName: string }) {
-  const point = payload?.[0]?.payload as RadarPoint | undefined;
-  if (!active || !point) return null;
-  return <div className="radar-tooltip">
-    <b>{point.metric}</b>
-    <span className="radar-tooltip-a">{playerAName} <strong>{point.playerA}th</strong><small>{point.rawA.toFixed(2)} / 90</small></span>
-    <span className="radar-tooltip-b">{playerBName} <strong>{point.playerB}th</strong><small>{point.rawB.toFixed(2)} / 90</small></span>
-  </div>;
-}
 
 function PlayerSearchField({ label, playerId, players, onChange }: {
   label: string;
@@ -161,8 +107,8 @@ export default function SeasonRadarComparison() {
     return () => controller.abort();
   }, [requestKey, seasonA, seasonB]);
 
-  const playersA = useMemo(() => (datasets[seasonA]?.players ?? []).filter(player => inCohort(player, cohort)).sort((a, b) => a.name.localeCompare(b.name)), [cohort, datasets, seasonA]);
-  const playersB = useMemo(() => (datasets[seasonB]?.players ?? []).filter(player => inCohort(player, cohort)).sort((a, b) => a.name.localeCompare(b.name)), [cohort, datasets, seasonB]);
+  const playersA = useMemo(() => (datasets[seasonA]?.players ?? []).filter(player => inRadarCohort(player, cohort)).sort((a, b) => a.name.localeCompare(b.name)), [cohort, datasets, seasonA]);
+  const playersB = useMemo(() => (datasets[seasonB]?.players ?? []).filter(player => inRadarCohort(player, cohort)).sort((a, b) => a.name.localeCompare(b.name)), [cohort, datasets, seasonB]);
 
   const selectedPlayerAId = playersA.some(player => player.id === playerAId) ? playerAId : (playersA.find(player => player.name.includes(defaultPlayers[cohort][0])) ?? playersA[0])?.id ?? "";
   const selectedPlayerBId = playersB.some(player => player.id === playerBId) ? playerBId : (playersB.find(player => player.name.includes(defaultPlayers[cohort][1])) ?? playersB[1] ?? playersB[0])?.id ?? "";
@@ -170,20 +116,20 @@ export default function SeasonRadarComparison() {
   const playerB = playersB.find(player => player.id === selectedPlayerBId);
   const loading = loadState.requestKey !== requestKey;
   const error = loadState.requestKey === requestKey ? loadState.error : "";
-  const peersA = playersA.filter(player => player.minutes >= 450);
-  const peersB = playersB.filter(player => player.minutes >= 450);
-  const chartData: RadarPoint[] = playerA && playerB ? radarMetrics[cohort].map(metric => ({
-    metric: labelFor(metric),
-    playerA: percentile(metricValue(playerA, metric), peersA.length ? peersA : playersA, metric),
-    playerB: percentile(metricValue(playerB, metric), peersB.length ? peersB : playersB, metric),
-    rawA: metricValue(playerA, metric),
-    rawB: metricValue(playerB, metric),
-  })) : [];
+  const chartData = playerA && playerB ? buildRadarData(playerA, playerB, cohort, playersA, playersB) : [];
+  const embedQuery = new URLSearchParams({
+    kind: "radar",
+    cohort,
+    seasonA,
+    seasonB,
+    playerA: selectedPlayerAId,
+    playerB: selectedPlayerBId,
+  });
 
   return <section className="season-radar-card">
     <header className="season-radar-head">
       <div><span className="eyebrow">Season radar</span><h2>Player profile comparison</h2><p>Compare percentile ranks across different Premier League seasons.</p></div>
-      <label className="radar-cohort"><span>Collective group</span><select value={cohort} onChange={event => { setCohort(event.target.value as RadarCohort); setPlayerAId(""); setPlayerBId(""); }}>{cohorts.map(item => <option key={item}>{item}</option>)}</select></label>
+      <div className="radar-head-actions"><GraphEmbedButton path={`/embed/graph?${embedQuery}`} height={650} disabled={loading || !!error || !playerA || !playerB}/><label className="radar-cohort"><span>Collective group</span><select value={cohort} onChange={event => { setCohort(event.target.value as RadarCohort); setPlayerAId(""); setPlayerBId(""); }}>{radarCohorts.map(item => <option key={item}>{item}</option>)}</select></label></div>
     </header>
     <div className="season-radar-body">
       <aside className="season-radar-controls">
@@ -197,14 +143,7 @@ export default function SeasonRadarComparison() {
             <div className="radar-player-a"><i/><strong>{playerA.name}</strong><span>{playerA.club} · {seasonA}</span></div>
             <div className="radar-player-b"><i/><strong>{playerB.name}</strong><span>{playerB.club} · {seasonB}</span></div>
           </div>
-          <div className="radar-chart-wrap"><ResponsiveContainer width="100%" height="100%"><RadarChart data={chartData} outerRadius="72%">
-            <PolarGrid stroke="#c9c7c0" strokeDasharray="3 4"/>
-            <PolarAngleAxis dataKey="metric" tick={{ fill: "#071e33", fontSize: 11, fontWeight: 700 }}/>
-            <PolarRadiusAxis domain={[0, 100]} tickCount={5} tick={{ fill: "#777c7e", fontSize: 9 }} axisLine={false}/>
-            <Radar name={playerA.name} dataKey="playerA" stroke="#e53b2c" fill="#e53b2c" fillOpacity={0.2} strokeWidth={3}/>
-            <Radar name={playerB.name} dataKey="playerB" stroke="#2e75b6" fill="#2e75b6" fillOpacity={0.14} strokeWidth={3}/>
-            <Tooltip content={props => <RadarTooltip {...props} playerAName={playerA.name} playerBName={playerB.name}/>}/>
-          </RadarChart></ResponsiveContainer></div>
+          <div className="radar-chart-wrap"><PlayerRadarChart data={chartData} playerAName={playerA.name} playerBName={playerB.name}/></div>
         </> : <div className="graph-empty"><strong>Select two players</strong><p>Choose a season and player on each side.</p></div>}
       </div>
     </div>

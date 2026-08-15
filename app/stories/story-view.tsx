@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
+import { isRadarEmbed, parseGraphEmbedBlock } from "../../lib/content/graph-embed";
 import type { Post, PublicationSettings } from "../../lib/content/types";
 
 function renderInline(text: string): ReactNode[] {
@@ -36,10 +37,12 @@ function renderTable(block: string, key: number) {
 function renderBody(body: string) {
   return body.split(/\n\n+/).filter(Boolean).map((block, index) => {
     const image = block.match(/^!\[(.*)]\((https:\/\/[^)]+)\)$/);
+    const graphEmbed = parseGraphEmbedBlock(block);
     if (block.startsWith("## ")) return <h2 key={index}>{renderInline(block.slice(3))}</h2>;
     if (block.startsWith("> ")) return <blockquote className="quote" key={index}>{renderInline(block.slice(2))}</blockquote>;
     if (block === "---") return <hr key={index}/>;
     if (image) return <figure className="body-image-wrap" key={index}><Image className="body-image" src={image[2]} alt={image[1] || "Article image"} width={1200} height={800} sizes="(max-width: 800px) calc(100vw - 40px), 650px"/>{image[1] ? <figcaption>{image[1]}</figcaption> : null}</figure>;
+    if (graphEmbed) return <div className={`graph-embed-wrap ${isRadarEmbed(graphEmbed) ? "is-radar" : ""}`} key={index}><iframe src={graphEmbed} title="TheStatMerchant interactive graph" loading="lazy" allow="fullscreen"/></div>;
     if (isTable(block)) return renderTable(block, index);
     const lines = block.split("\n");
     if (lines.every(line=>/^-\s+/.test(line))) return <ul key={index}>{lines.map((line,lineIndex)=><li key={lineIndex}>{renderInline(line.replace(/^-\s+/, ""))}</li>)}</ul>;

@@ -206,6 +206,8 @@ body::before {
 .graph-canvas { display:flex; flex-direction:column; min-width:0; min-height:0; padding:22px 28px 14px; }
 .graph-canvas header { display:flex; flex:none; justify-content:space-between; align-items:flex-start; gap:20px; border-bottom:1px solid var(--line); padding-bottom:14px; }
 .graph-canvas h2 { font-family:"Aleo",Georgia,serif; font-size:32px; letter-spacing:-.035em; margin:2px 0; }.graph-canvas header p { color:var(--muted); font-size:11px; margin:0; max-width:680px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.graph-head-actions { display:flex; align-items:center; gap:8px; flex:none; }
+.graph-embed-button { border:1px solid var(--ink); background:transparent; color:var(--ink); padding:7px 10px; font-size:9px; font-weight:900; text-transform:uppercase; letter-spacing:.07em; cursor:pointer; white-space:nowrap; }.graph-embed-button:hover:not(:disabled){background:var(--ink);color:white}.graph-embed-button:disabled{opacity:.38;cursor:not-allowed}
 .live-badge { flex:none; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; border:1px solid var(--line); padding:7px 9px; }.live-badge i { display:inline-block; width:6px; height:6px; border-radius:50%; background:#28a66a; margin-right:5px; }.live-badge.demo i{background:var(--yellow)}.live-badge.error i{background:var(--red)}
 .chart-stage { min-height:0; flex:1; padding-top:8px; }.graph-empty { height:100%; display:grid; place-content:center; text-align:center; }.graph-empty strong { font-family:"Aleo",serif; font-size:25px; }.graph-empty p { color:var(--muted); font-size:12px; max-width:420px; }.graph-error strong{color:var(--red)}
 .graph-retry { justify-self:center; margin-top:10px; border:1px solid var(--ink); background:transparent; color:var(--ink); padding:8px 16px; font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.08em; cursor:pointer; }.graph-retry:hover{background:var(--ink);color:white}
@@ -216,6 +218,7 @@ body::before {
 .season-radar-card { flex:none; min-height:690px; border:1px solid var(--line); background:#f9f7f1; }
 .season-radar-head { display:flex; align-items:flex-end; justify-content:space-between; gap:30px; padding:24px 28px; border-bottom:1px solid var(--line); }
 .season-radar-head h2 { margin:4px 0 3px; font-family:"Aleo",Georgia,serif; font-size:30px; letter-spacing:-.035em; }.season-radar-head p{margin:0;color:var(--muted);font-size:11px}
+.radar-head-actions { display:flex; align-items:flex-end; gap:12px; flex:none; }
 .radar-cohort { width:230px; flex:none; }.radar-cohort span,.radar-player-control label span,.radar-player-search>span{display:block;margin-bottom:6px;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.11em}.radar-cohort select,.radar-player-control select{width:100%;border:1px solid var(--line);background:white;color:var(--ink);padding:9px 10px;font-size:11px;outline:none}
 .season-radar-body { min-height:600px; display:grid; grid-template-columns:300px minmax(0,1fr); }
 .season-radar-controls { padding:22px 20px; border-right:1px solid var(--line); background:#f4f1ea; }.season-radar-controls>p{margin:20px 0 0;color:var(--muted);font-size:10px;line-height:1.5}
@@ -225,6 +228,14 @@ body::before {
 .radar-players { display:grid; grid-template-columns:1fr 1fr; gap:18px; flex:none; }.radar-players>div{display:grid;grid-template-columns:9px 1fr;column-gap:8px;padding-bottom:12px;border-bottom:3px solid}.radar-players i{grid-row:1/3;width:8px;height:8px;border-radius:50%;margin-top:4px}.radar-players strong{font-family:"Aleo",Georgia,serif;font-size:18px}.radar-players span{color:var(--muted);font-size:10px}.radar-players>div.radar-player-a{border-color:var(--red)}.radar-player-a i{background:var(--red)}.radar-players>div.radar-player-b{border-color:#2e75b6}.radar-player-b i{background:#2e75b6}
 .radar-chart-wrap { flex:1; min-height:500px; }
 .radar-tooltip { min-width:180px;padding:12px 14px;background:var(--ink);color:white;box-shadow:4px 4px 0 rgba(229,59,44,.35)}.radar-tooltip>b{display:block;margin-bottom:9px;font-family:"Aleo",serif}.radar-tooltip span{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:5px 0;font-size:10px}.radar-tooltip span+span{border-top:1px solid rgba(255,255,255,.15)}.radar-tooltip strong{font-size:13px}.radar-tooltip small{grid-column:1/3;color:#b7c1ca}.radar-tooltip-a strong{color:#ff7469}.radar-tooltip-b strong{color:#7bbcff}
+
+/* Public graph embeds */
+.embed-graph { width:100vw; height:100vh; min-height:360px; padding:20px 24px 13px; overflow:hidden; display:flex; flex-direction:column; background:#f9f7f1; color:var(--ink); }
+.embed-graph-header { flex:none; display:flex; justify-content:space-between; align-items:flex-start; gap:20px; padding-bottom:12px; border-bottom:1px solid var(--line); }.embed-graph-header h1{margin:2px 0;font-family:"Aleo",Georgia,serif;font-size:30px;line-height:1.05;letter-spacing:-.035em}.embed-graph-header p{max-width:720px;margin:0;color:var(--muted);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.embed-graph-header img{display:block;width:84px;height:auto}
+.embed-graph footer { flex:none; padding-top:9px; border-top:1px solid var(--line); color:var(--muted); font-size:9px; }
+.embed-comparison-chart { min-height:0; flex:1; padding-top:8px; }
+.embed-radar { min-height:500px; }.embed-radar-players{padding-top:13px}.embed-radar-chart{min-height:0;flex:1}.embed-radar footer{justify-content:flex-start}
+.embed-error { align-items:center; justify-content:center; text-align:center; gap:10px; }.embed-error img{margin-bottom:10px}.embed-error strong{font-family:"Aleo",Georgia,serif;font-size:28px}.embed-error p{max-width:460px;margin:0;color:var(--muted);font-size:12px}
 
 /* Article */
 .preview-banner { min-height: 42px; position: relative; z-index: 11; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 9px 18px; background: var(--ink); color: white; font-size: 11px; }
@@ -254,6 +265,8 @@ body::before {
 .body-image-wrap { margin: 38px 0; }
 .body-image { display: block; width: 100%; height: auto; }
 .body-image-wrap figcaption { margin-top: 8px; color: var(--muted); font-family: Arial, sans-serif; font-size: 10px; line-height: 1.4; }
+.graph-embed-wrap { width:100%; aspect-ratio:16 / 10; margin:38px 0; overflow:hidden; border:1px solid var(--line); background:#f9f7f1; }.graph-embed-wrap.is-radar{aspect-ratio:5 / 4}.graph-embed-wrap iframe{display:block;width:100%;height:100%;border:0}.graph-embed-wrap>span{display:none}
+.rich-editor-canvas .graph-embed-wrap { position:relative; }.rich-editor-canvas .graph-embed-wrap iframe{pointer-events:none}.rich-editor-canvas .graph-embed-wrap>span{position:absolute;right:8px;bottom:8px;display:block;padding:5px 7px;background:var(--ink);color:white;font-family:Arial,sans-serif;font-size:9px;line-height:1}
 .article-table-wrap { width: 100%; margin: 34px 0; overflow-x: auto; border-top: 3px solid var(--ink); }
 .article-table { width: 100%; border-collapse: collapse; font-family: Arial, Helvetica, sans-serif; font-size: 13px; line-height: 1.4; }
 .article-table th { background: rgba(7,30,51,.07); font-weight: 900; text-align: left; }
@@ -311,5 +324,6 @@ body::before {
   .related { margin-top: 20px; }
   .article-footer { display: block; }
   .graph-page-stack{display:block}.graph-builder { height:auto;min-height:0;grid-template-columns:1fr; overflow:visible; }.graph-controls { border-right:0; border-bottom:1px solid var(--line); overflow:visible; }.player-field{min-height:180px}.player-list { max-height:145px; }.graph-canvas { padding:22px 16px 15px; min-height:500px; }.graph-canvas h2{font-size:28px}.chart-stage{min-height:340px}.graph-canvas footer{gap:12px}.live-badge{display:none}
-  .season-radar-card{margin-top:24px}.season-radar-head{display:block;padding:22px 18px}.radar-cohort{width:100%;margin-top:18px}.season-radar-body{grid-template-columns:1fr}.season-radar-controls{border-right:0;border-bottom:1px solid var(--line)}.season-radar-visual{min-height:560px;padding:20px 12px}.radar-chart-wrap{min-height:460px}.radar-players strong{font-size:15px}
+  .graph-head-actions{align-items:flex-end;flex-direction:column}.graph-embed-button{font-size:8px}.season-radar-card{margin-top:24px}.season-radar-head{display:block;padding:22px 18px}.radar-head-actions{display:block}.radar-head-actions .graph-embed-button{margin-top:16px}.radar-cohort{width:100%;margin-top:12px}.season-radar-body{grid-template-columns:1fr}.season-radar-controls{border-right:0;border-bottom:1px solid var(--line)}.season-radar-visual{min-height:560px;padding:20px 12px}.radar-chart-wrap{min-height:460px}.radar-players strong{font-size:15px}
+  .embed-graph{padding:14px 12px 10px}.embed-graph-header h1{font-size:24px}.embed-graph-header img{width:68px}.embed-radar .radar-players strong{font-size:13px}.embed-radar-chart{margin:0 -8px}.graph-embed-wrap{aspect-ratio:4 / 3}.graph-embed-wrap.is-radar{aspect-ratio:3 / 4}
 }
