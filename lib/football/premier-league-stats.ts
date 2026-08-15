@@ -13,6 +13,7 @@ const CLUBS_BY_SEASON: Record<string, string[]> = {
   "2025/26": [...COMMON_CLUBS, "Burnley_90", "Leeds_2", "Sunderland_56"],
   "2024/25": [...COMMON_CLUBS, "Ipswich_40", "Leicester_13", "Southampton_20"],
   "2023/24": [...COMMON_CLUBS, "Burnley_90", "Luton_102", "Sheffield_Utd_49"],
+  "2022/23": [...COMMON_CLUBS, "Leeds_2", "Leicester_13", "Southampton_20"],
 };
 
 const METRIC_COLUMNS: Record<MetricKey, string> = {

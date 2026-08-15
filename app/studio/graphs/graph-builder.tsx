@@ -5,6 +5,7 @@ import { footballCatalog } from "../../../lib/football/repository";
 import type { ChartType, CompetitionId, FootballDataset, MetricKey, PositionGroup } from "../../../lib/football/types";
 import { ChartTypeSelector, CompetitionSelector, MetricSelector, PlayerSelector, PositionSelector, SeasonSelector } from "./selectors";
 import { GraphRenderer } from "./graph-renderer";
+import SeasonRadarComparison from "./season-radar-comparison";
 
 type LoadedDataset = FootballDataset & { requestKey: string };
 
@@ -49,7 +50,8 @@ export default function GraphBuilder() {
     () => (dataset?.requestKey === requestKey ? dataset.players : []).filter(player => position === "All Players" || player.position === position),
     [dataset, position, requestKey],
   );
-  const selectedPlayers = players.filter(player => selected.includes(player.id));
+  const selectedSet = new Set(selected);
+  const selectedPlayers = players.filter(player => selectedSet.has(player.id));
   const metricLabel = footballCatalog.metrics.find(item => item.key === metric)?.label;
   const competitionName = footballCatalog.competitions.find(item => item.id === competition)?.name;
   const isLive = dataset?.requestKey === requestKey && dataset.source === "api-football";
@@ -57,7 +59,7 @@ export default function GraphBuilder() {
   const statusLabel = loadError ? "Source error" : loading ? "Loading" : isLive ? "API-Football" : isCommunity ? "PL Stats" : "Demo data";
   const updatedAt = dataset?.requestKey === requestKey ? new Date(dataset.updatedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "";
 
-  return <div className="graph-builder">
+  return <div className="graph-page-stack"><div className="graph-builder">
     <aside className="graph-controls">
       <div className="control-head"><span>Build comparison</span><button onClick={() => setSelected([])}>Clear</button></div>
       <CompetitionSelector value={competition} onChange={value => { setCompetition(value); setPosition("All Players"); setSelected([]); setLoadError(""); }} />
@@ -77,5 +79,5 @@ export default function GraphBuilder() {
       </div>
       <footer><span>{season} {competitionName} · {isLive ? "Live provider data" : dataset?.note ?? "Demo dataset"}</span><span>{players.length} players · {updatedAt ? `Loaded ${updatedAt}` : "Loading…"}</span></footer>
     </section>
-  </div>;
+  </div><SeasonRadarComparison/></div>;
 }

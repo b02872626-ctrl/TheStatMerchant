@@ -6,7 +6,7 @@ export const competitions: Competition[] = [
   { id: "champions-league", name: "Champions League", apiFootballId: 2 },
 ];
 
-export const seasons = ["2025/26", "2024/25", "2023/24"];
+export const seasons = ["2025/26", "2024/25", "2023/24", "2022/23"];
 export const positionGroups: PositionGroup[] = ["All Players", "Goalkeepers", "Defenders", "Midfielders", "Forwards"];
 export const metrics: Metric[] = [
   { key: "goals", label: "Goals / 90", shortLabel: "Goals" }, { key: "assists", label: "Assists / 90", shortLabel: "Assists" },

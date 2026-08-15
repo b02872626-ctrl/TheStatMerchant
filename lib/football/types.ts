@@ -1,6 +1,6 @@
 export type CompetitionId = "premier-league" | "la-liga" | "serie-a" | "bundesliga" | "champions-league";
 export type PositionGroup = "Goalkeepers" | "Defenders" | "Midfielders" | "Forwards" | "All Players";
-export type ChartType = "bar" | "scatter" | "radar";
+export type ChartType = "bar" | "scatter";
 
 export type MetricKey = "goals" | "assists" | "shots" | "keyPasses" | "passes" | "tackles" | "interceptions" | "dribbles";
 
