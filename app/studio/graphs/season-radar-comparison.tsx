@@ -4,18 +4,24 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, ResponsiveContainer, Tooltip } from "recharts";
 import type { TooltipContentProps, TooltipValueType } from "recharts";
 import { footballCatalog } from "../../../lib/football/repository";
-import type { FootballDataset, MetricKey, Player } from "../../../lib/football/types";
+import type { FootballDataset, MetricKey, Player, ProfileMetricKey } from "../../../lib/football/types";
 
 type RadarCohort = "All players" | "Forwards" | "Midfielders" | "Defenders" | "Attacking midfielders";
 type RadarPoint = { metric: string; playerA: number; playerB: number; rawA: number; rawB: number };
 
 const cohorts: RadarCohort[] = ["All players", "Forwards", "Midfielders", "Defenders", "Attacking midfielders"];
-const radarMetrics: Record<RadarCohort, MetricKey[]> = {
+const radarMetrics: Record<RadarCohort, ProfileMetricKey[]> = {
   "All players": ["goals", "assists", "shots", "keyPasses", "dribbles", "passes", "tackles", "interceptions"],
   Forwards: ["goals", "assists", "shots", "keyPasses", "dribbles", "passes", "tackles", "interceptions"],
   Midfielders: ["assists", "keyPasses", "passes", "dribbles", "shots", "goals", "tackles", "interceptions"],
-  Defenders: ["passes", "tackles", "interceptions", "keyPasses", "assists", "dribbles", "shots", "goals"],
+  Defenders: ["tacklesWon", "interceptions", "clearances", "blocks", "aerialDuelsWon", "recoveries", "duelsWon", "passes"],
   "Attacking midfielders": ["goals", "assists", "shots", "keyPasses", "dribbles", "passes", "tackles", "interceptions"],
+};
+const profileLabels: Record<ProfileMetricKey, string> = {
+  goals: "Goals", assists: "Assists", shots: "Shots", keyPasses: "Key passes",
+  passes: "Passes", tackles: "Tackles", interceptions: "Interceptions", dribbles: "Dribbles",
+  tacklesWon: "Tackles won", clearances: "Clearances", blocks: "Blocks",
+  aerialDuelsWon: "Aerial wins", recoveries: "Recoveries", duelsWon: "Duels won",
 };
 const defaultPlayers: Record<RadarCohort, [string, string]> = {
   "All players": ["Salah", "Saka"],
@@ -35,16 +41,21 @@ function inCohort(player: Player, cohort: RadarCohort) {
   );
 }
 
-function percentile(value: number, players: Player[], metric: MetricKey) {
+function metricValue(player: Player, metric: ProfileMetricKey) {
+  if (metric in player.metrics) return player.metrics[metric as MetricKey];
+  return player.profileMetrics?.[metric] ?? 0;
+}
+
+function percentile(value: number, players: Player[], metric: ProfileMetricKey) {
   if (!players.length) return 0;
-  const values = players.map(player => player.metrics[metric]);
+  const values = players.map(player => metricValue(player, metric));
   const below = values.filter(item => item < value).length;
   const equal = values.filter(item => item === value).length;
   return Math.round(((below + equal / 2) / values.length) * 100);
 }
 
-function labelFor(metric: MetricKey) {
-  return footballCatalog.metrics.find(item => item.key === metric)?.shortLabel ?? metric;
+function labelFor(metric: ProfileMetricKey) {
+  return profileLabels[metric];
 }
 
 function RadarTooltip({ active, payload, playerAName, playerBName }: TooltipContentProps<TooltipValueType, string | number> & { playerAName: string; playerBName: string }) {
@@ -163,10 +174,10 @@ export default function SeasonRadarComparison() {
   const peersB = playersB.filter(player => player.minutes >= 450);
   const chartData: RadarPoint[] = playerA && playerB ? radarMetrics[cohort].map(metric => ({
     metric: labelFor(metric),
-    playerA: percentile(playerA.metrics[metric], peersA.length ? peersA : playersA, metric),
-    playerB: percentile(playerB.metrics[metric], peersB.length ? peersB : playersB, metric),
-    rawA: playerA.metrics[metric],
-    rawB: playerB.metrics[metric],
+    playerA: percentile(metricValue(playerA, metric), peersA.length ? peersA : playersA, metric),
+    playerB: percentile(metricValue(playerB, metric), peersB.length ? peersB : playersB, metric),
+    rawA: metricValue(playerA, metric),
+    rawB: metricValue(playerB, metric),
   })) : [];
 
   return <section className="season-radar-card">

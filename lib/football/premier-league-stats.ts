@@ -1,4 +1,4 @@
-import type { MetricKey, Player, PositionGroup } from "./types";
+import type { DefensiveMetricKey, MetricKey, Player, PositionGroup } from "./types";
 
 const DATA_ROOT = "https://raw.githubusercontent.com/imadeddine-belkat/Premier-League-Stats/main/pl_stats";
 
@@ -26,6 +26,14 @@ const METRIC_COLUMNS: Record<MetricKey, string> = {
   interceptions: "interceptions",
   dribbles: "successfulDribbles",
 };
+const DEFENSIVE_METRIC_COLUMNS: Record<DefensiveMetricKey, string> = {
+  tacklesWon: "tacklesWon",
+  clearances: "totalClearances",
+  blocks: "blocks",
+  aerialDuelsWon: "aerialDuelsWon",
+  recoveries: "recoveries",
+  duelsWon: "duelsWon",
+};
 
 type CsvRecord = Record<string, string>;
 type PlayerAccumulator = {
@@ -35,6 +43,7 @@ type PlayerAccumulator = {
   clubs: Set<string>;
   minutes: number;
   totals: Record<MetricKey, number>;
+  defensiveTotals: Record<DefensiveMetricKey, number>;
 };
 
 function parseCsv(input: string): CsvRecord[] {
@@ -92,6 +101,10 @@ function emptyTotals(): Record<MetricKey, number> {
   return { goals: 0, assists: 0, shots: 0, keyPasses: 0, passes: 0, tackles: 0, interceptions: 0, dribbles: 0 };
 }
 
+function emptyDefensiveTotals(): Record<DefensiveMetricKey, number> {
+  return { tacklesWon: 0, clearances: 0, blocks: 0, aerialDuelsWon: 0, recoveries: 0, duelsWon: 0 };
+}
+
 async function fetchClubSeason(club: string, season: string) {
   const seasonLabel = season.replace("/", "-");
   const response = await fetch(`${DATA_ROOT}/${club}/players_stats/${seasonLabel}_players_stats.csv`, { cache: "no-store" });
@@ -121,11 +134,15 @@ export async function getPremierLeagueStatsPlayers(season: string): Promise<Play
       clubs: new Set<string>(),
       minutes: 0,
       totals: emptyTotals(),
+      defensiveTotals: emptyDefensiveTotals(),
     };
     if (record.team_name) existing.clubs.add(record.team_name);
     existing.minutes += minutes;
     (Object.entries(METRIC_COLUMNS) as [MetricKey, string][]).forEach(([metric, column]) => {
       existing.totals[metric] += numeric(record, column);
+    });
+    (Object.entries(DEFENSIVE_METRIC_COLUMNS) as [DefensiveMetricKey, string][]).forEach(([metric, column]) => {
+      existing.defensiveTotals[metric] += numeric(record, column);
     });
     players.set(id, existing);
   });
@@ -142,6 +159,9 @@ export async function getPremierLeagueStatsPlayers(season: string): Promise<Play
       metrics: Object.fromEntries(
         (Object.keys(player.totals) as MetricKey[]).map(metric => [metric, Math.round((player.totals[metric] * 90 / player.minutes) * 100) / 100]),
       ) as Record<MetricKey, number>,
+      profileMetrics: Object.fromEntries(
+        (Object.keys(player.defensiveTotals) as DefensiveMetricKey[]).map(metric => [metric, Math.round((player.defensiveTotals[metric] * 90 / player.minutes) * 100) / 100]),
+      ) as Record<DefensiveMetricKey, number>,
     }))
     .sort((a, b) => b.minutes - a.minutes);
 }

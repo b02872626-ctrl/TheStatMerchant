@@ -20,7 +20,7 @@ const getCachedApiFootballPlayers = unstable_cache(
 
 const getCachedPremierLeagueStatsPlayers = unstable_cache(
   getPremierLeagueStatsPlayers,
-  ["premier-league-stats-players-v1"],
+  ["premier-league-stats-players-v2"],
   { revalidate: 60 * 60 * 6 },
 );
 

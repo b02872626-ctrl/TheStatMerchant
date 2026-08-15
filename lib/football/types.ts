@@ -3,6 +3,8 @@ export type PositionGroup = "Goalkeepers" | "Defenders" | "Midfielders" | "Forwa
 export type ChartType = "bar" | "scatter";
 
 export type MetricKey = "goals" | "assists" | "shots" | "keyPasses" | "passes" | "tackles" | "interceptions" | "dribbles";
+export type DefensiveMetricKey = "tacklesWon" | "clearances" | "blocks" | "aerialDuelsWon" | "recoveries" | "duelsWon";
+export type ProfileMetricKey = MetricKey | DefensiveMetricKey;
 
 export type Player = {
   id: string;
@@ -13,6 +15,7 @@ export type Player = {
   position: Exclude<PositionGroup, "All Players">;
   minutes: number;
   metrics: Record<MetricKey, number>;
+  profileMetrics?: Partial<Record<ProfileMetricKey, number>>;
 };
 
 export type Competition = { id: CompetitionId; name: string; apiFootballId: number };
