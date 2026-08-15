@@ -29,6 +29,21 @@ function hasErrors(errors: ApiFootballPage["errors"]) {
   return Array.isArray(errors) ? errors.length > 0 : Boolean(errors && Object.keys(errors).length);
 }
 
+function providerErrorMessage(errors: ApiFootballPage["errors"]) {
+  const messages = Array.isArray(errors)
+    ? errors
+    : errors && typeof errors === "object"
+      ? Object.values(errors)
+      : [];
+  const detail = messages
+    .flatMap(message => typeof message === "string" ? [message] : [])
+    .map(message => message.trim())
+    .filter(Boolean)
+    .join(" ")
+    .slice(0, 240);
+  return detail || "The provider rejected this request. Check the API key, rate limit, and season coverage.";
+}
+
 function positionGroup(position?: string | null): Exclude<PositionGroup, "All Players"> {
   if (position === "Goalkeeper") return "Goalkeepers";
   if (position === "Defender") return "Defenders";
@@ -76,11 +91,13 @@ async function fetchPage(apiKey: string, league: number, season: number, page: n
   url.searchParams.set("page", String(page));
   const response = await fetch(url, {
     headers: { "x-apisports-key": apiKey },
-    next: { revalidate: 60 * 60 * 6 },
+    // Provider error responses must never be cached. Successful transformed
+    // datasets are cached by the application route instead.
+    cache: "no-store",
   });
   if (!response.ok) throw new Error(`API-Football returned ${response.status}.`);
   const data = await response.json() as ApiFootballPage;
-  if (hasErrors(data.errors)) throw new Error("API-Football rejected the request. Check the API key and season coverage.");
+  if (hasErrors(data.errors)) throw new Error(`API-Football: ${providerErrorMessage(data.errors)}`);
   return data;
 }
 

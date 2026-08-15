@@ -19,7 +19,7 @@ export type Competition = { id: CompetitionId; name: string; apiFootballId: numb
 export type Metric = { key: MetricKey; label: string; shortLabel: string };
 export type FootballDataset = {
   players: Player[];
-  source: "api-football" | "demo";
+  source: "premier-league-stats" | "api-football" | "demo";
   updatedAt: string;
   note?: string;
 };

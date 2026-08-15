@@ -17,11 +17,15 @@ export default function GraphBuilder() {
   const [chartType, setChartType] = useState<ChartType>("bar");
   const [dataset, setDataset] = useState<LoadedDataset | null>(null);
   const [loadError, setLoadError] = useState("");
+  const [retryCount, setRetryCount] = useState(0);
   const requestKey = `${competition}:${season}`;
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch(`/api/football/players?competition=${encodeURIComponent(competition)}&season=${encodeURIComponent(season)}`, { signal: controller.signal })
+    fetch(`/api/football/players?competition=${encodeURIComponent(competition)}&season=${encodeURIComponent(season)}`, {
+      signal: controller.signal,
+      cache: "no-store",
+    })
       .then(async response => {
         const result = await response.json();
         if (!response.ok) throw new Error(result.error ?? "Football data could not be loaded.");
@@ -38,7 +42,7 @@ export default function GraphBuilder() {
         setLoadError(error instanceof Error ? error.message : "Football data could not be loaded.");
       });
     return () => controller.abort();
-  }, [competition, requestKey, season]);
+  }, [competition, requestKey, retryCount, season]);
 
   const loading = dataset?.requestKey !== requestKey && !loadError;
   const players = useMemo(
@@ -49,6 +53,8 @@ export default function GraphBuilder() {
   const metricLabel = footballCatalog.metrics.find(item => item.key === metric)?.label;
   const competitionName = footballCatalog.competitions.find(item => item.id === competition)?.name;
   const isLive = dataset?.requestKey === requestKey && dataset.source === "api-football";
+  const isCommunity = dataset?.requestKey === requestKey && dataset.source === "premier-league-stats";
+  const statusLabel = loadError ? "Source error" : loading ? "Loading" : isLive ? "API-Football" : isCommunity ? "PL Stats" : "Demo data";
   const updatedAt = dataset?.requestKey === requestKey ? new Date(dataset.updatedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "";
 
   return <div className="graph-builder">
@@ -64,12 +70,12 @@ export default function GraphBuilder() {
     <section className="graph-canvas">
       <header>
         <div><span className="eyebrow">Player comparison · per 90</span><h2>{metricLabel}</h2><p>{selectedPlayers.length ? selectedPlayers.map(player => player.name).join(" · ") : "Select players from the control panel"}</p></div>
-        <div className={`live-badge ${isLive ? "" : "demo"}`}><i />{isLive ? "API-Football" : "Demo data"}</div>
+        <div className={`live-badge ${loadError ? "error" : isLive || isCommunity ? "" : "demo"}`}><i />{statusLabel}</div>
       </header>
       <div className="chart-stage">
-        {loading ? <div className="graph-empty"><strong>Loading player data…</strong><p>Fetching and preparing season statistics.</p></div> : loadError ? <div className="graph-empty graph-error"><strong>Data unavailable</strong><p>{loadError}</p></div> : <GraphRenderer players={selectedPlayers} metric={metric} type={chartType} />}
+        {loading ? <div className="graph-empty"><strong>Loading player data…</strong><p>Fetching and preparing season statistics.</p></div> : loadError ? <div className="graph-empty graph-error"><strong>Data unavailable</strong><p>{loadError}</p><button type="button" className="graph-retry" onClick={() => { setLoadError(""); setRetryCount(count => count + 1); }}>Retry</button></div> : <GraphRenderer players={selectedPlayers} metric={metric} type={chartType} />}
       </div>
-      <footer><span>{season} {competitionName} · {isLive ? "Live provider data" : dataset?.note ?? "Demo dataset"}</span><span>{players.length} players · {updatedAt ? `Updated ${updatedAt}` : "Loading…"}</span></footer>
+      <footer><span>{season} {competitionName} · {isLive ? "Live provider data" : dataset?.note ?? "Demo dataset"}</span><span>{players.length} players · {updatedAt ? `Loaded ${updatedAt}` : "Loading…"}</span></footer>
     </section>
   </div>;
 }
