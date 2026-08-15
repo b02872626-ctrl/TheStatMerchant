@@ -1,22 +1,24 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, ResponsiveContainer, Tooltip } from "recharts";
 import type { TooltipContentProps, TooltipValueType } from "recharts";
 import { footballCatalog } from "../../../lib/football/repository";
 import type { FootballDataset, MetricKey, Player } from "../../../lib/football/types";
 
-type RadarCohort = "Forwards" | "Midfielders" | "Defenders" | "Attacking midfielders";
+type RadarCohort = "All players" | "Forwards" | "Midfielders" | "Defenders" | "Attacking midfielders";
 type RadarPoint = { metric: string; playerA: number; playerB: number; rawA: number; rawB: number };
 
-const cohorts: RadarCohort[] = ["Forwards", "Midfielders", "Defenders", "Attacking midfielders"];
+const cohorts: RadarCohort[] = ["All players", "Forwards", "Midfielders", "Defenders", "Attacking midfielders"];
 const radarMetrics: Record<RadarCohort, MetricKey[]> = {
+  "All players": ["goals", "assists", "shots", "keyPasses", "dribbles", "passes", "tackles", "interceptions"],
   Forwards: ["goals", "assists", "shots", "keyPasses", "dribbles", "passes", "tackles", "interceptions"],
   Midfielders: ["assists", "keyPasses", "passes", "dribbles", "shots", "goals", "tackles", "interceptions"],
   Defenders: ["passes", "tackles", "interceptions", "keyPasses", "assists", "dribbles", "shots", "goals"],
   "Attacking midfielders": ["goals", "assists", "shots", "keyPasses", "dribbles", "passes", "tackles", "interceptions"],
 };
 const defaultPlayers: Record<RadarCohort, [string, string]> = {
+  "All players": ["Salah", "Saka"],
   Forwards: ["Salah", "Saka"],
   Midfielders: ["Rice", "Ødegaard"],
   Defenders: ["van Dijk", "Saliba"],
@@ -24,6 +26,7 @@ const defaultPlayers: Record<RadarCohort, [string, string]> = {
 };
 
 function inCohort(player: Player, cohort: RadarCohort) {
+  if (cohort === "All players") return true;
   if (cohort !== "Attacking midfielders") return player.position === cohort;
   return player.position === "Midfielders" && (
     player.metrics.keyPasses >= 1 ||
@@ -54,6 +57,53 @@ function RadarTooltip({ active, payload, playerAName, playerBName }: TooltipCont
   </div>;
 }
 
+function PlayerSearchField({ label, playerId, players, onChange }: {
+  label: string;
+  playerId: string;
+  players: Player[];
+  onChange: (playerId: string) => void;
+}) {
+  const listId = useId();
+  const [draft, setDraft] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+  const selectedPlayer = players.find(player => player.id === playerId);
+  const query = (draft ?? "").trim().toLowerCase();
+  const results = players
+    .filter(player => !query || `${player.name} ${player.club}`.toLowerCase().includes(query))
+    .slice(0, 10);
+  const inputValue = draft ?? (selectedPlayer ? `${selectedPlayer.name} · ${selectedPlayer.club}` : "");
+  const choose = (player: Player) => {
+    onChange(player.id);
+    setDraft(null);
+    setOpen(false);
+  };
+
+  return <div className="radar-player-search">
+    <span>Player</span>
+    <input
+      type="search"
+      role="combobox"
+      aria-label={`${label} player`}
+      aria-controls={listId}
+      aria-expanded={open}
+      aria-autocomplete="list"
+      value={inputValue}
+      disabled={!players.length}
+      placeholder="Search player or club…"
+      onFocus={() => { setDraft(""); setOpen(true); }}
+      onChange={event => { setDraft(event.target.value); setOpen(true); }}
+      onBlur={() => { setDraft(null); setOpen(false); }}
+      onKeyDown={event => {
+        if (event.key === "Escape") { setDraft(null); setOpen(false); event.currentTarget.blur(); }
+        if (event.key === "Enter" && results[0]) { event.preventDefault(); choose(results[0]); }
+      }}
+    />
+    {open ? <div id={listId} className="radar-player-results" role="listbox">
+      {results.length ? results.map(player => <button key={player.id} type="button" role="option" aria-selected={player.id === playerId} onMouseDown={event => event.preventDefault()} onClick={() => choose(player)}><b>{player.name}</b><small>{player.club} · {player.minutes.toLocaleString()} min</small></button>) : <p>No matching players</p>}
+    </div> : null}
+  </div>;
+}
+
 function PlayerSeasonControl({ label, season, playerId, players, onSeasonChange, onPlayerChange }: {
   label: string;
   season: string;
@@ -65,7 +115,7 @@ function PlayerSeasonControl({ label, season, playerId, players, onSeasonChange,
   return <div className="radar-player-control">
     <strong>{label}</strong>
     <label><span>Season</span><select value={season} onChange={event => onSeasonChange(event.target.value)}>{footballCatalog.seasons.map(item => <option key={item}>{item}</option>)}</select></label>
-    <label><span>Player</span><select value={playerId} onChange={event => onPlayerChange(event.target.value)} disabled={!players.length}>{players.map(player => <option key={player.id} value={player.id}>{player.name} · {player.club}</option>)}</select></label>
+    <PlayerSearchField label={label} playerId={playerId} players={players} onChange={onPlayerChange}/>
   </div>;
 }
 
@@ -126,8 +176,8 @@ export default function SeasonRadarComparison() {
     </header>
     <div className="season-radar-body">
       <aside className="season-radar-controls">
-        <PlayerSeasonControl label="Player one" season={seasonA} playerId={selectedPlayerAId} players={playersA} onSeasonChange={setSeasonA} onPlayerChange={setPlayerAId}/>
-        <PlayerSeasonControl label="Player two" season={seasonB} playerId={selectedPlayerBId} players={playersB} onSeasonChange={setSeasonB} onPlayerChange={setPlayerBId}/>
+        <PlayerSeasonControl key={`a-${cohort}-${seasonA}`} label="Player one" season={seasonA} playerId={selectedPlayerAId} players={playersA} onSeasonChange={setSeasonA} onPlayerChange={setPlayerAId}/>
+        <PlayerSeasonControl key={`b-${cohort}-${seasonB}`} label="Player two" season={seasonB} playerId={selectedPlayerBId} players={playersB} onSeasonChange={setSeasonB} onPlayerChange={setPlayerBId}/>
         <p>Percentiles are calculated against {cohort.toLowerCase()} with at least 450 league minutes in each player&apos;s selected season.</p>
       </aside>
       <div className="season-radar-visual">
